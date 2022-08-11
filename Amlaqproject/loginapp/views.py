@@ -26,6 +26,7 @@ def get_tokens_for_user(user):
 class UserRegistrationView(APIView):
     renderer_classes = [UserRenderers]
     def post(self, request , format = None):
+        print("hrlloooooo")
         serializer = UserRegistrationSerializer(data = request.data)
         serializer.is_valid(raise_exception = True)
         user = serializer.save()
