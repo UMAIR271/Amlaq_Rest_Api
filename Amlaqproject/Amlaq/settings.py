@@ -26,7 +26,7 @@ SECRET_KEY = 'cr0tnv4cl8btz=98hpby(e@pzh@vk)hfz+e&4h7a2e&=&k5cn8'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -142,7 +142,7 @@ EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_PASS')
 
 
 
-
+DEFAULT_AUTO_FIELD='django.db.models.AutoField'
 
 #JWT
 SIMPLE_JWT = {
