@@ -2,6 +2,8 @@ from django.urls import path, include
 from loginapp.views import (UserRegistrationView, UserLoginView, UserProfileView, UserChangePasswordView,
 SendPasswordResetEmailView,UserPasswordResetView, VerifyEmail, GoogleSocialAuthView)
 
+app_name = 'loginapp'
+
 urlpatterns = [
     path('register/', UserRegistrationView.as_view() , name= "register"),
     path('email-verify/', VerifyEmail.as_view() , name= "email-verify"),

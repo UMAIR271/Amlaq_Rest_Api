@@ -40,12 +40,12 @@ class UserRegistrationView(GenericAPIView):
         token = get_tokens_for_user(user)
         get_token = token['access']
         current_site = get_current_site(request).domain
-        relativeLink = reverse('email-verify')
+        relativeLink = reverse('loginapp:email-verify')
         absurl = 'http://'+current_site+relativeLink+"?token="+str(get_token)
         email_body = 'Hi '+user.name + ' Use the link below to verify your email \n' + absurl
         data = {'body': email_body, 'to_email': user.email,'subject': 'Verify your email'}
         Util.send_email(data)
-        return Response({"token":token, "mag": "Registraion success"}, status = status.HTTP_201_CREATED)
+        return Response({ "mag": "Registraion success","token":token,}, status = status.HTTP_201_CREATED)
 
 
 class VerifyEmail(GenericAPIView):
