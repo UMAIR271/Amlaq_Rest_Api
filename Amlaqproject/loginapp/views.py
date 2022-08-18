@@ -1,14 +1,17 @@
 from rest_framework.response import Response
+from rest_framework.generics import GenericAPIView
 from rest_framework import status
 from rest_framework.views import APIView
 from loginapp.serializers import (UserRegistrationSerializer ,UserLoginSerializer, UserProfileSerializer, 
-UserChangePasswordSerlizer, SendPasswordResetEmailSerlizer, UserPasswordResetSerializer,EmailVerificationSerializer)
+UserChangePasswordSerlizer, SendPasswordResetEmailSerlizer, UserPasswordResetSerializer,EmailVerificationSerializer,GoogleSocialAuthSerializer)
 from django.contrib.auth import authenticate
 from loginapp.renderers import UserRenderers
 from rest_framework_simplejwt.tokens import RefreshToken
 from .models import User
 from .utils import Util
 from django.urls import reverse
+from drf_yasg.utils import swagger_auto_schema
+from drf_yasg import openapi
 from django.contrib.sites.shortcuts import get_current_site
 from rest_framework.permissions import IsAuthenticated
 import jwt
@@ -23,11 +26,11 @@ def get_tokens_for_user(user):
         'access': str(refresh.access_token),
     }
 
-class UserRegistrationView(APIView):
+class UserRegistrationView(GenericAPIView):
     renderer_classes = [UserRenderers]
+    serializer_class = UserRegistrationSerializer
     def post(self, request , format = None):
-        print("hrlloooooo")
-        serializer = UserRegistrationSerializer(data = request.data)
+        serializer = self.serializer_class(data = request.data)
         serializer.is_valid(raise_exception = True)
         user = serializer.save()
         user_data = serializer.data
@@ -45,32 +48,39 @@ class UserRegistrationView(APIView):
         return Response({"token":token, "mag": "Registraion success"}, status = status.HTTP_201_CREATED)
 
 
-class VerifyEmail(APIView):
+class VerifyEmail(GenericAPIView):
     renderer_classes = [UserRenderers]
+    serializer_class = EmailVerificationSerializer
+
+    token_param_config = openapi.Parameter(
+        'token', in_=openapi.IN_QUERY, description='Description', type=openapi.TYPE_STRING)
+
+    @swagger_auto_schema(manual_parameters=[token_param_config])
+
     def get(self, request):
         try:
-            serializer = EmailVerificationSerializer(data=request.data)
+            serializer = self.serializer_class(data=request.data)
             serializer.is_valid(raise_exception=True)
             token = serializer.data.get('token')
-            print("hello")
             payload = jwt.decode(token, settings.SECRET_KEY)
             print(payload)
             user = User.objects.get(id=payload['user_id'])
             if not user.is_varified:
                 user.is_varified = True
                 user.save()
-            return Response({'email': 'Successfully activated'}, status=status.HTTP_200_OK)
+            return Response({'message':'Successfully activated','email': 'Successfully activated'}, status=status.HTTP_200_OK)
         except jwt.ExpiredSignatureError as identifier:
-            return Response({'error': 'Activation Expired'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'message': 'Activation Expired','error': 'Activation Expired'}, status=status.HTTP_400_BAD_REQUEST)
         except jwt.exceptions.DecodeError as identifier:
-            return Response({'error': 'Invalid token'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'message':'Invalid token', 'error': 'Invalid token'}, status=status.HTTP_400_BAD_REQUEST)
         
         
 
-class UserLoginView(APIView):
+class UserLoginView(GenericAPIView):
     renderer_classes = [UserRenderers]
+    serializer_class = UserLoginSerializer
     def post(self, request , format = None):
-        serializer = UserLoginSerializer(data=request.data)
+        serializer =self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
         email = serializer.data.get("email")
         password = serializer.data.get("password")
@@ -78,27 +88,30 @@ class UserLoginView(APIView):
         print(user)
         if user is not None:
             token = get_tokens_for_user(user)
-            return Response({"token":token, "mas":"Login Success"}, status=status.HTTP_200_OK)
+            return Response({"message":"Login Success","token":token,}, status=status.HTTP_200_OK)
         else:
-            return Response({"errors":{'none_field_errors':['Email or Password is not Valid']}}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"message":'Email or Password is not Valid' ,"errors":{'none_field_errors':['Email or Password is not Valid']}}, status=status.HTTP_400_BAD_REQUEST)
         
 
 
-class UserProfileView(APIView):
+class UserProfileView(GenericAPIView):
     renderer_classes = [UserRenderers]
     permission_classes = [IsAuthenticated]
+    serializer_class = UserProfileSerializer
     def get(self, request, format = None):
-        serializer = UserProfileSerializer(request.user)
+        serializer = self.serializer_class(request.user)
+        print(serializer.data)
         return Response(serializer.data , status=status.HTTP_200_OK)
 
 
 
-class UserChangePasswordView(APIView):
+class UserChangePasswordView(GenericAPIView):
 
     renderer_classes = [UserRenderers]
     permission_classes = [IsAuthenticated]
+    serializer_class = UserChangePasswordSerlizer
     def post(self, request , format = None):
-        serializer = UserChangePasswordSerlizer(data=request.data, context = {'user':request.user})
+        serializer = self.serializer_class(data=request.data, context = {'user':request.user})
         print(serializer)
         serializer.is_valid(raise_exception=True)
         return Response({"mas":"Password changed Successfully"}, status=status.HTTP_200_OK)
@@ -107,26 +120,36 @@ class UserChangePasswordView(APIView):
 
 
 
-class SendPasswordResetEmailView(APIView):
+class SendPasswordResetEmailView(GenericAPIView):
     renderer_classes = [UserRenderers]
+    serializer_class = SendPasswordResetEmailSerlizer
     def post(self , request , format= None):
-        serializer = SendPasswordResetEmailSerlizer(data=request.data)
+        serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
         return Response({"mas":"Password Reset Link send . Please check your Email"},status=status.HTTP_200_OK)
 
-class UserPasswordResetView(APIView):
+class UserPasswordResetView(GenericAPIView):
     renderer_classes = [UserRenderers]
+    serializer_class = UserPasswordResetSerializer
     def post(self , request, uid, token, format= None):
-        serializer = UserPasswordResetSerializer(data=request.data , context ={'uid':uid,'token':token})
+        serializer = self.serializer_class(data=request.data , context ={'uid':uid,'token':token})
         serializer.is_valid(raise_exception=True)
         return Response({"mas":"Password Reset successfully"},status=status.HTTP_200_OK)
         
         
 
 
+class GoogleSocialAuthView(GenericAPIView):
+
+    serializer_class = GoogleSocialAuthSerializer
+
+    def post(self, request):
+        """
+        POST with "auth_token"
+        Send an idtoken as from google to get user information
+        """
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = ((serializer.validated_data)['auth_token'])
+        return Response(data, status=status.HTTP_200_OK)
         
-
-
-
-
-

@@ -1,6 +1,6 @@
 from django.urls import path, include
 from loginapp.views import (UserRegistrationView, UserLoginView, UserProfileView, UserChangePasswordView,
-SendPasswordResetEmailView,UserPasswordResetView, VerifyEmail)
+SendPasswordResetEmailView,UserPasswordResetView, VerifyEmail, GoogleSocialAuthView)
 
 urlpatterns = [
     path('register/', UserRegistrationView.as_view() , name= "register"),
@@ -10,6 +10,8 @@ urlpatterns = [
     path('changepassword/', UserChangePasswordView.as_view() , name= "changepassword"),
     path('sendresetpasswordemail/', SendPasswordResetEmailView.as_view() , name= "sendresetpasswordemail"),
     path('reset-password/<uid>/<token>/', UserPasswordResetView.as_view() , name= "reset-password"),
+    path('google/',  GoogleSocialAuthView.as_view() , name= "google"),
+
 
 
 

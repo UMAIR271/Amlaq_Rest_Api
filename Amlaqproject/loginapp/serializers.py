@@ -2,6 +2,12 @@ from django.utils.encoding import smart_str, force_bytes, DjangoUnicodeDecodeErr
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from xml.dom import ValidationErr
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
+from .register import register_social_user
+from rest_framework import serializers
+from . import google
+from .register import register_social_user
+import os
+from rest_framework.exceptions import AuthenticationFailed
 from rest_framework import serializers
 from loginapp.models import User
 from .utils import Util
@@ -122,6 +128,32 @@ class UserPasswordResetSerializer(serializers.Serializer):
             raise ValidationErr("token is not valid or Expied")
 
 
+
+
+
+class GoogleSocialAuthSerializer(serializers.Serializer):
+    auth_token = serializers.CharField()
+
+    def validate_auth_token(self, auth_token):
+        user_data = google.Google.validate(auth_token)
+        try:
+            user_data['sub']
+        except:
+            raise serializers.ValidationError(
+                'The token is invalid or expired. Please login again.'
+            )
+
+        if user_data['aud'] != os.environ.get('GOOGLE_CLIENT_ID'):
+
+            raise AuthenticationFailed('oops, who are you?')
+
+        user_id = user_data['sub']
+        email = user_data['email']
+        name = user_data['name']
+        provider = 'google'
+
+        return register_social_user(
+            provider=provider, user_id=user_id, email=email, name=name)
 
 
 

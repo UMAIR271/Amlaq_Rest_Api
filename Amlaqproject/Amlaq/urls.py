@@ -15,16 +15,30 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-from listing.views import ListingViewSet
-from rest_framework.routers import DefaultRouter
-router = DefaultRouter()
-router.register('listapi',ListingViewSet, basename='list')
+
+from rest_framework import permissions
+from drf_yasg.views import get_schema_view
+from drf_yasg import openapi
+
+schema_view = get_schema_view(
+   openapi.Info(
+      title="API DOCS",
+      default_version='1.0.0',
+      description="Test description",
+   ),
+   public=True,
+   permission_classes=[permissions.AllowAny],
+)
 
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('api/user/', include('loginapp.urls')),
-    path('', include(router.urls)),
-
-
+     path(
+        'api/v1/',
+        include([
+            path('loginapp/', include(('loginapp.urls', "loginapp"), namespace = "loginapp")),
+            # path('listapi/', include(('listing.urls', "listapi"), namespace = "listapi")),
+            path('swagger/schema/', schema_view.with_ui('swagger',cache_timeout=0), name='schema-schema'),
+])
+    )
 ]

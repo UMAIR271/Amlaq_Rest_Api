@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import BaseUserManager, AbstractBaseUser
+from rest_framework_simplejwt.tokens import RefreshToken
 
 
 # Create your models here.
@@ -37,6 +38,10 @@ class MyUserManager(BaseUserManager):
         user.save(using=self._db)
         return user
 
+AUTH_PROVIDERS = {
+    'google':'google',
+    'email':'email'
+}
 
 # Create custom user here.
 class User(AbstractBaseUser):
@@ -52,6 +57,10 @@ class User(AbstractBaseUser):
     is_admin = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    auth_provider = models.CharField(
+        max_length=255, blank=False,
+        null=False, default=AUTH_PROVIDERS.get('email')
+    )
 
 
     objects = MyUserManager()
@@ -71,6 +80,13 @@ class User(AbstractBaseUser):
         "Does the user have permissions to view the app `app_label`?"
         # Simplest possible answer: Yes, always
         return True
+
+    def tokens(self):
+        refresh = RefreshToken.for_user(self)
+        return {
+            'refresh': str(refresh),
+            'access': str(refresh.access_token)
+        }
 
     @property
     def is_staff(self):
