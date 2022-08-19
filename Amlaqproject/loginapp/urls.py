@@ -1,11 +1,12 @@
 from django.urls import path, include
-from loginapp.views import (UserRegistrationView, UserLoginView, UserProfileView, UserChangePasswordView,
+from loginapp.views import (UserRegistrationView, UserLoginView, UserProfileView, UserChangePasswordView,VerifyOTP,
 SendPasswordResetEmailView,UserPasswordResetView, VerifyEmail, GoogleSocialAuthView)
 
 app_name = 'loginapp'
 
 urlpatterns = [
     path('register/', UserRegistrationView.as_view() , name= "register"),
+    path('VerifyOTP/', VerifyOTP.as_view() , name= "VerifyOTP"),
     path('email-verify/', VerifyEmail.as_view() , name= "email-verify"),
     path('login/', UserLoginView  .as_view() , name= "login"),
     path('profile/', UserProfileView.as_view() , name= "profile"),

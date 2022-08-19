@@ -1,3 +1,5 @@
+from dataclasses import fields
+from pyexpat import model
 from django.utils.encoding import smart_str, force_bytes, DjangoUnicodeDecodeError
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from xml.dom import ValidationErr
@@ -12,12 +14,11 @@ from rest_framework import serializers
 from loginapp.models import User
 from .utils import Util
 
-
 class UserRegistrationSerializer(serializers.ModelSerializer):
     password2 = serializers.CharField(style={'input_type': 'password'} , write_only = True)
     class Meta :
         model = User
-        fields = ['email', 'name', 'password', 'password2']
+        fields = ['email', 'name', 'password', 'password2','is_varified' ]
         extra_kwargs = {
             'password': {
                 'write_only' : True
@@ -34,6 +35,12 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
     def create(self, validate_data):
         return User.objects.create_user(**validate_data)
 
+
+class VerifyAccountSerializers(serializers.Serializer):
+    email = serializers.EmailField()
+    otp = serializers.CharField()
+
+    
 
 class EmailVerificationSerializer(serializers.ModelSerializer):
     token = serializers.CharField(max_length=555)

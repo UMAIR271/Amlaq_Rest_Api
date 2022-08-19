@@ -1,9 +1,11 @@
+from distutils.log import error
 from rest_framework.response import Response
 from rest_framework.generics import GenericAPIView
 from rest_framework import status
 from rest_framework.views import APIView
+from rest_framework.exceptions import APIException
 from loginapp.serializers import (UserRegistrationSerializer ,UserLoginSerializer, UserProfileSerializer, 
-UserChangePasswordSerlizer, SendPasswordResetEmailSerlizer, UserPasswordResetSerializer,EmailVerificationSerializer,GoogleSocialAuthSerializer)
+UserChangePasswordSerlizer, SendPasswordResetEmailSerlizer,VerifyAccountSerializers, UserPasswordResetSerializer,EmailVerificationSerializer,GoogleSocialAuthSerializer)
 from django.contrib.auth import authenticate
 from loginapp.renderers import UserRenderers
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -24,28 +26,83 @@ def get_tokens_for_user(user):
     return {
         'refresh': str(refresh),
         'access': str(refresh.access_token),
-    }
+           }
+
+# class UserRegistrationView(GenericAPIView):
+#     renderer_classes = [UserRenderers]
+#     serializer_class = UserRegistrationSerializer
+#     def post(self, request , format = None):
+#         serializer = self.serializer_class(data = request.data)
+#         serializer.is_valid(raise_exception = True)
+#         user = serializer.save()
+#         user_data = serializer.data
+#         print(user_data)
+#         user = User.objects.get(email = user_data['email'])
+#         print(user)
+#         token = get_tokens_for_user(user)
+#         get_token = token['access']
+#         current_site = get_current_site(request).domain
+#         relativeLink = reverse('loginapp:email-verify')
+#         absurl = 'http://'+current_site+relativeLink+"?token="+str(get_token)
+#         email_body = 'Hi '+user.name + ' Use the link below to verify your email \n' + absurl
+#         data = {'body': email_body, 'to_email': user.email,'subject': 'Verify your email'}
+#         Util.send_email(data)
+#         return Response({ "mag": "Registraion success","token":token,}, status = status.HTTP_201_CREATED)
+
 
 class UserRegistrationView(GenericAPIView):
-    renderer_classes = [UserRenderers]
+    # renderer_classes = [UserRenderers]
     serializer_class = UserRegistrationSerializer
     def post(self, request , format = None):
-        serializer = self.serializer_class(data = request.data)
-        serializer.is_valid(raise_exception = True)
-        user = serializer.save()
-        user_data = serializer.data
-        print(user_data)
-        user = User.objects.get(email = user_data['email'])
-        print(user)
-        token = get_tokens_for_user(user)
-        get_token = token['access']
-        current_site = get_current_site(request).domain
-        relativeLink = reverse('loginapp:email-verify')
-        absurl = 'http://'+current_site+relativeLink+"?token="+str(get_token)
-        email_body = 'Hi '+user.name + ' Use the link below to verify your email \n' + absurl
-        data = {'body': email_body, 'to_email': user.email,'subject': 'Verify your email'}
-        Util.send_email(data)
-        return Response({ "mag": "Registraion success","token":token,}, status = status.HTTP_201_CREATED)
+        try:
+            serializer = self.serializer_class(data = request.data)
+            if serializer.is_valid():
+                user = serializer.save()
+                user_data = serializer.data
+                user = User.objects.get(email = user_data['email'])
+                token = get_tokens_for_user(user)
+                data = {'to_email': user.email,'subject': 'Verify your email'}
+                Util.send_email(data)
+                return Response({ "message": "Registraion success","token":token,}, status = status.HTTP_201_CREATED)
+            
+            for key, values in serializer.errors.items():
+                error = [value[:] for value in values]
+                print(error)
+            
+            return Response({ "message": error, 'error': serializer.errors }, status = status.HTTP_201_CREATED)
+
+        except Exception as e:
+            print(e)
+            
+
+class VerifyOTP(APIView):
+
+    def post(self, request):
+        try:
+            data = request.data 
+            serializer =  VerifyAccountSerializers(data=data)
+            if serializer.is_valid():
+                email = serializer.data['email']
+                otp = serializer.data['otp']
+                user = User.objects.filter(email = email)
+                if not user.exists():
+                    return Response({ "message": "invalid Email", 'error': "invalid Email" }, status = status.HTTP_401_UNAUTHORIZED)
+                if user[0].otp != otp:
+                    return Response({ "message": "OTP is Wrong", 'error': "OTP is Wrong" }, status = status.HTTP_401_UNAUTHORIZED)
+                user = user.first()
+                user.is_varified = True
+                user.save()
+                return Response({ "message": "Account verified","data":"Account verified",}, status = status.HTTP_201_CREATED)
+            
+            for key, values in serializer.errors.items():
+                error = [value[:] for value in values]
+                var=error[0].replace('This', key)
+                print(var)
+                return Response({ "message": var, 'error': serializer.errors }, status = status.HTTP_400_BAD_REQUEST)
+
+
+        except Exception as e:
+            print(e)
 
 
 class VerifyEmail(GenericAPIView):
@@ -73,11 +130,11 @@ class VerifyEmail(GenericAPIView):
             return Response({'message': 'Activation Expired','error': 'Activation Expired'}, status=status.HTTP_400_BAD_REQUEST)
         except jwt.exceptions.DecodeError as identifier:
             return Response({'message':'Invalid token', 'error': 'Invalid token'}, status=status.HTTP_400_BAD_REQUEST)
-        
-        
+
+
 
 class UserLoginView(GenericAPIView):
-    renderer_classes = [UserRenderers]
+    # renderer_classes = [UserRenderers]
     serializer_class = UserLoginSerializer
     def post(self, request , format = None):
         serializer =self.serializer_class(data=request.data)
@@ -91,6 +148,28 @@ class UserLoginView(GenericAPIView):
             return Response({"message":"Login Success","token":token,}, status=status.HTTP_200_OK)
         else:
             return Response({"message":'Email or Password is not Valid' ,"errors":{'none_field_errors':['Email or Password is not Valid']}}, status=status.HTTP_400_BAD_REQUEST)
+        
+        
+        
+
+# class UserLoginView(APIView):
+#     # renderer_classes = [UserRenderers]
+#     serializer_class = UserLoginSerializer
+#     def post(self, request , format = None):
+#         serializer =self.serializer_class(data=request.data)
+#         if  serializer.is_valid():
+#             return Response({'message': 'Yay the data is valid!!!'},
+#                 status=status.HTTP_200_OK)
+        
+#         error = serializer.error_messages
+#         print(error)
+        
+#         # for key, values in serializer.errors.items():
+#         #     error = [value[:] for value in values]
+#         #     print(error)
+#         return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
+
+       
         
 
 

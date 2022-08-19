@@ -1,3 +1,4 @@
+from pickle import TRUE
 from django.db import models
 from django.contrib.auth.models import BaseUserManager, AbstractBaseUser
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -52,6 +53,7 @@ class User(AbstractBaseUser):
     is_varified = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
     is_admin = models.BooleanField(default=False)
+    otp = models.CharField(max_length=6, null= True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     auth_provider = models.CharField(
