@@ -59,17 +59,29 @@ class UserRegistrationView(GenericAPIView):
             if serializer.is_valid():
                 user = serializer.save()
                 user_data = serializer.data
-                user = User.objects.get(email = user_data['email'])
+                user = User.objects.filter(email = user_data['email'])
+                user_object = user.values()
                 token = get_tokens_for_user(user)
                 data = {'to_email': user.email,'subject': 'Verify your email'}
                 Util.send_email(data)
-                return Response({ "message": "Registraion success","token":token,}, status = status.HTTP_201_CREATED)
+            
+                return Response({ "message": "Registraion success","token":token, 'user_object':user_object}, status = status.HTTP_201_CREATED)
             
             for key, values in serializer.errors.items():
                 error = [value[:] for value in values]
-                print(error)
-            
-            return Response({ "message": error, 'error': serializer.errors }, status = status.HTTP_201_CREATED)
+                var=error[0].replace('This', key)
+                print(var)
+
+            # for key, values in serializer.errors.items():
+            #     error = [value[:] for value in values]
+            #     print(error)
+
+            # error_list = [serializer.errors[error][0] for error in serializer.errors]
+            # print(error_list)
+            user_data = serializer.data
+            user = User.objects.filter(email = user_data['email'])
+            user_object = user.values()
+            return Response({ "message": var, 'error': serializer.errors, 'user_object':user_object }, status = status.HTTP_201_CREATED)
 
         except Exception as e:
             print(e)
@@ -142,12 +154,14 @@ class UserLoginView(GenericAPIView):
         email = serializer.data.get("email")
         password = serializer.data.get("password")
         user =  authenticate(email=email, password=password)
+        user_obj=User.objects.filter(email=email).values()
+        print(user_obj)
         print(user)
         if user is not None:
             token = get_tokens_for_user(user)
-            return Response({"message":"Login Success","token":token,}, status=status.HTTP_200_OK)
+            return Response({"message":"Login Success","token":token, "user_obj":user_obj}, status=status.HTTP_200_OK)
         else:
-            return Response({"message":'Email or Password is not Valid' ,"errors":{'none_field_errors':['Email or Password is not Valid']}}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"message":'Email or Password is not Valid', "errors":{'none_field_errors':['Email or Password is not Valid'],"user_obj":""}}, status=status.HTTP_400_BAD_REQUEST)
         
         
         
