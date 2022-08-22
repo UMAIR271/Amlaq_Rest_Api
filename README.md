@@ -2,7 +2,9 @@
  this project is created using  django  restframework 
  
  1 intall python 
+ 
  2 create the virtual environment
+ 
  3 install requirments.txt
        pip install -r requirments.txt
        
