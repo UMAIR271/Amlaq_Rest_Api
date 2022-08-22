@@ -7,5 +7,6 @@
        pip install -r requirments.txt
        
  4  cd Amlaqproject
+ 
  5 run  python manage.py runserver 
  
