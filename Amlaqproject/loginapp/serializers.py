@@ -7,9 +7,9 @@ from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from .register import register_social_user
 from rest_framework import serializers
 from . import google
-from .register import register_social_user
 import os
 from rest_framework.exceptions import AuthenticationFailed
+from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers
 from loginapp.models import User
 from .utils import Util
@@ -35,10 +35,14 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
     def create(self, validate_data):
         return User.objects.create_user(**validate_data)
 
+class SendOtpSerializers(serializers.Serializer):
+    email = serializers.EmailField()
+
 
 class VerifyAccountSerializers(serializers.Serializer):
     email = serializers.EmailField()
     otp = serializers.CharField()
+
 
     
 
@@ -67,6 +71,27 @@ class UserChangePasswordSerlizer(serializers.Serializer):
     password = serializers.CharField(max_length=255, style= {'input_type':'password'}, write_only = True)
     password2 = serializers.CharField(max_length=255, style= {'input_type':'password'}, write_only = True)
     class Meta:
+        fields = ['password','password2']
+
+
+    def validate(self, data):
+        password = data.get('password')
+        password2 = data.get('password2')
+        user = self.context.get('user')
+        if password != password2:
+            raise serializers.ValidationError("Password and Confrim Password doesn't match")
+        user.set_password(password)
+        user.save()
+        return data
+
+
+
+class ChangePasswordSerializer(serializers.Serializer):
+    old_password = serializers.CharField(required=True)
+    password = serializers.CharField(max_length=255, style= {'input_type':'password'}, write_only = True)
+    password2 = serializers.CharField(max_length=255, style= {'input_type':'password'}, write_only = True)
+    class Meta:
+        model = User
         fields = ['password','password2']
 
 
@@ -135,6 +160,34 @@ class UserPasswordResetSerializer(serializers.Serializer):
             raise ValidationErr("token is not valid or Expied")
 
 
+
+# class ChangePasswordSerializer(serializers.ModelSerializer):
+#     password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
+#     password2 = serializers.CharField(write_only=True, required=True)
+#     old_password = serializers.CharField(write_only=True, required=True)
+
+#     class Meta:
+#         model = User
+#         fields = ('old_password', 'password', 'password2')
+
+#     def validate(self, attrs):
+#         if attrs['password'] != attrs['password2']:
+#             raise serializers.ValidationError({"password": "Password fields didn't match."})
+
+#         return attrs
+
+#     def validate_old_password(self, value):
+#         user = self.context['request'].user
+#         if not user.check_password(value):
+#             raise serializers.ValidationError({"old_password": "Old password is not correct"})
+#         return value
+
+#     def update(self, instance, validated_data):
+
+#         instance.set_password(validated_data['password'])
+#         instance.save()
+
+#         return instance
 
 
 

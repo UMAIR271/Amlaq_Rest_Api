@@ -1,5 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.models import User
+from Amlaq import settings
 # Create your models here.
 
 
@@ -35,6 +37,8 @@ class listing(models.Model):
     (NORMAL, 'Normal'),
     (HIGH, 'High'),
 )
+
+    user_name = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     Title = models.CharField(max_length=50)
     Descriptions = models.CharField(max_length=300)
     Type = models.CharField(max_length=1, choices=TYPE_CHOIES)

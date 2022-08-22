@@ -1,11 +1,12 @@
 from distutils.log import error
 from rest_framework.response import Response
+from rest_framework import generics
 from rest_framework.generics import GenericAPIView
 from rest_framework import status
 from rest_framework.views import APIView
+import json
 from rest_framework.exceptions import APIException
-from loginapp.serializers import (UserRegistrationSerializer ,UserLoginSerializer, UserProfileSerializer, 
-UserChangePasswordSerlizer, SendPasswordResetEmailSerlizer,VerifyAccountSerializers, UserPasswordResetSerializer,EmailVerificationSerializer,GoogleSocialAuthSerializer)
+from loginapp.serializers import *
 from django.contrib.auth import authenticate
 from loginapp.renderers import UserRenderers
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -59,33 +60,56 @@ class UserRegistrationView(GenericAPIView):
             if serializer.is_valid():
                 user = serializer.save()
                 user_data = serializer.data
-                user = User.objects.filter(email = user_data['email'])
-                user_object = user.values()
+                user = User.objects.get(email = user_data['email'])
+                data = User.objects.filter(email = user_data['email']).values(
+                    'id', 'email','name','is_varified','is_active','created_at','updated_at','auth_provider')
+                print(data)
                 token = get_tokens_for_user(user)
+                # data = {'to_email': user.email,'subject': 'Verify your email'}
+                # Util.send_email(data)
+                return Response({ "message": "Registraion success","token":token,"user_obj":data}, status = status.HTTP_201_CREATED)
+            
+            for key, values in serializer.errors.items():
+                error = [value[:] for value in values]
+                print(error)
+            
+            return Response({ "message": error, 'error': serializer.errors }, status = status.HTTP_422_UNPROCESSABLE_ENTITY)
+
+        except Exception as e:
+            print(e)
+            print(type(e))
+            return Response({'error': e }, status = status.HTTP_404_NOT_FOUND)
+
+class SendOTP(APIView):
+
+    def post(self, request):
+        try:
+            data = request.data 
+            serializer =  SendOtpSerializers(data=data)
+            if serializer.is_valid():
+                email = serializer.data['email']
+                print(email)
+                user = User.objects.get(email = email)
+                print(user)
+                if not user:
+                    return Response({ "message": "invalid Email", 'error': "invalid Email" }, status = status.HTTP_401_UNAUTHORIZED)
+
                 data = {'to_email': user.email,'subject': 'Verify your email'}
                 Util.send_email(data)
-            
-                return Response({ "message": "Registraion success","token":token, 'user_object':user_object}, status = status.HTTP_201_CREATED)
+                return Response({ "message": "Please Check your email"}, status = status.HTTP_201_CREATED)
             
             for key, values in serializer.errors.items():
                 error = [value[:] for value in values]
                 var=error[0].replace('This', key)
                 print(var)
+                return Response({ "message": var, 'error': serializer.errors }, status = status.HTTP_400_BAD_REQUEST)
 
-            # for key, values in serializer.errors.items():
-            #     error = [value[:] for value in values]
-            #     print(error)
-
-            # error_list = [serializer.errors[error][0] for error in serializer.errors]
-            # print(error_list)
-            user_data = serializer.data
-            user = User.objects.filter(email = user_data['email'])
-            user_object = user.values()
-            return Response({ "message": var, 'error': serializer.errors, 'user_object':user_object }, status = status.HTTP_201_CREATED)
 
         except Exception as e:
             print(e)
-            
+            print(type(e))
+            return Response({'error': serializer.errors }, status = status.HTTP_404_NOT_FOUND)
+
 
 class VerifyOTP(APIView):
 
@@ -97,6 +121,7 @@ class VerifyOTP(APIView):
                 email = serializer.data['email']
                 otp = serializer.data['otp']
                 user = User.objects.filter(email = email)
+                print(user)
                 if not user.exists():
                     return Response({ "message": "invalid Email", 'error': "invalid Email" }, status = status.HTTP_401_UNAUTHORIZED)
                 if user[0].otp != otp:
@@ -114,7 +139,8 @@ class VerifyOTP(APIView):
 
 
         except Exception as e:
-            print(e)
+            return Response({'error': e }, status = status.HTTP_404_NOT_FOUND)
+            
 
 
 class VerifyEmail(GenericAPIView):
@@ -154,14 +180,12 @@ class UserLoginView(GenericAPIView):
         email = serializer.data.get("email")
         password = serializer.data.get("password")
         user =  authenticate(email=email, password=password)
-        user_obj=User.objects.filter(email=email).values()
-        print(user_obj)
         print(user)
         if user is not None:
             token = get_tokens_for_user(user)
-            return Response({"message":"Login Success","token":token, "user_obj":user_obj}, status=status.HTTP_200_OK)
+            return Response({"message":"Login Success","token":token,}, status=status.HTTP_200_OK)
         else:
-            return Response({"message":'Email or Password is not Valid', "errors":{'none_field_errors':['Email or Password is not Valid'],"user_obj":""}}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"message":'Email or Password is not Valid' ,"errors":{'none_field_errors':['Email or Password is not Valid']}}, status=status.HTTP_400_BAD_REQUEST)
         
         
         
@@ -187,14 +211,20 @@ class UserLoginView(GenericAPIView):
         
 
 
-class UserProfileView(GenericAPIView):
-    renderer_classes = [UserRenderers]
+class UserProfileView(APIView):
+    # renderer_classes = [UserRenderers]
     permission_classes = [IsAuthenticated]
     serializer_class = UserProfileSerializer
     def get(self, request, format = None):
         serializer = self.serializer_class(request.user)
-        print(serializer.data)
-        return Response(serializer.data , status=status.HTTP_200_OK)
+        data = serializer.data
+        email = data['email']
+        user = User.objects.get(email = email)
+        if not user:
+                    return Response({ "message": "invalid Email", 'error': "invalid Email" }, status = status.HTTP_401_UNAUTHORIZED)
+        user_object = User.objects.filter(email = email).values(
+                    'id', 'email','name','is_varified','is_active','created_at','updated_at','auth_provider')
+        return Response({'data':data,'user_object':user_object}, status=status.HTTP_200_OK)
 
 
 
@@ -211,7 +241,40 @@ class UserChangePasswordView(GenericAPIView):
         
 
 
+class ChangePasswordView(generics.UpdateAPIView):
+    """
+    An endpoint for changing password.
+    """
+    serializer_class = ChangePasswordSerializer
+    model = User
+    permission_classes = (IsAuthenticated,)
 
+    def get_object(self, queryset=None):
+        obj = self.request.user
+        print(obj)
+        return obj
+
+    def update(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        serializer = self.serializer_class(data=request.data)
+        print(serializer, "serializer data")
+        if serializer.is_valid():
+            # Check old password
+            if not self.object.check_password(serializer.data.get("old_password")):
+                return Response({"old_password": ["Wrong password."]}, status=status.HTTP_400_BAD_REQUEST)
+            # set_password also hashes the password that the user will get
+            self.object.set_password(serializer.data.get("new_password"))
+            self.object.save()
+            response = {
+                'status': 'success',
+                'code': status.HTTP_200_OK,
+                'message': 'Password updated successfully',
+                'data': []
+            }
+
+            return Response(response)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class SendPasswordResetEmailView(GenericAPIView):
     renderer_classes = [UserRenderers]
