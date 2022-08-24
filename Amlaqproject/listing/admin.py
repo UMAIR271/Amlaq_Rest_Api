@@ -1,6 +1,12 @@
 from django.contrib import admin
-from .models import listing
+from .models import *
 # Register your models here.
-@admin.register(listing)
-class ListingAdmin(admin.ModelAdmin):
-    list_display = ('Title', 'Descriptions','Type','Purpose_Type','Property_Type')
+# @admin.register(listing)
+admin.site.register(listing)
+admin.site.register(Property_Type)
+admin.site.register(Listing_Media)
+admin.site.register(Amenities)
+admin.site.register(Listing_Amenities)
+
+
+
