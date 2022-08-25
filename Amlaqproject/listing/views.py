@@ -1,12 +1,14 @@
 from django.shortcuts import render
 from django.shortcuts import get_object_or_404
 # Create your views here.
-from rest_framework import status
+from rest_framework import status, generics
 from django.shortcuts import render
-from listing.serializers import ListingSerializer
-from listing.models import listing
+
+from .serializers import ListingSerializer, NotificationSerializer
+from .models import listing, notifications
 from rest_framework import viewsets
 from rest_framework.response import Response
+
 
 # Create your views here.
 
@@ -35,7 +37,7 @@ class ListingViewSet(viewsets.ViewSet):
         queryset = listing.objects.all()
         serializer = ListingSerializer(queryset, many=True)
         return Response(serializer.data)
-        
+
     def retrieve(self, request, pk=None):
         try:
             snippet = listing.objects.get(pk=pk)
@@ -75,4 +77,7 @@ class ListingViewSet(viewsets.ViewSet):
         snippet.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-        
+
+class CreateNotification(generics.ListCreateAPIView):
+    queryset = notifications.objects.all()
+    serializer_class = NotificationSerializer

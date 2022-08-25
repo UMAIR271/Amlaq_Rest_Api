@@ -1,5 +1,5 @@
 from django.urls import path, include
-from loginapp.views import (UserRegistrationView, UserLoginView, UserProfileView, UserChangePasswordView,VerifyOTP,
+from .views import (UserRegistrationView, UserLoginView, UserProfileView, UserChangePasswordView,VerifyOTP,
 SendPasswordResetEmailView,UserPasswordResetView, VerifyEmail, GoogleSocialAuthView)
 
 app_name = 'loginapp'

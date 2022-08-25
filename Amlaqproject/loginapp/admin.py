@@ -1,15 +1,15 @@
 from django.contrib import admin
 
 # Register your models here.
-from loginapp.models import User
+from .models import User
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 
+
 class UserModelAdmin(BaseUserAdmin):
- 
     # The fields to be used in displaying the User model.
     # These override the definitions on the base UserModelAdmin
     # that reference specific fields on auth.User.
-    list_display = ('id','email', 'name', 'is_admin')
+    list_display = ('id', 'email', 'name', 'is_admin')
     list_filter = ('is_admin',)
     fieldsets = (
         ('User Credentials', {'fields': ('email', 'password')}),
@@ -25,7 +25,7 @@ class UserModelAdmin(BaseUserAdmin):
         }),
     )
     search_fields = ('email',)
-    ordering = ('email','id')
+    ordering = ('email', 'id')
     filter_horizontal = ()
 
 
