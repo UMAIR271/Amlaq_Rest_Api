@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import listing, notifications
+from .models import listing, notifications, BasicQuestionair, UserQuestionair, ListingQuestionair
 
 
 # Register your models here.
@@ -9,3 +9,6 @@ class ListingAdmin(admin.ModelAdmin):
 
 
 admin.site.register(notifications)
+admin.site.register(BasicQuestionair)
+admin.site.register(UserQuestionair)
+admin.site.register(ListingQuestionair)
