@@ -98,3 +98,12 @@ class ListingQuestionair(models.Model):
 
     def __str__(self):
         return self.correct_answer
+
+
+class FavouriteListing(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    listing = models.ForeignKey(listing, on_delete=models.CASCADE, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.user

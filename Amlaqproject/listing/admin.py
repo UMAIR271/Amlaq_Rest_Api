@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import listing, notifications, BasicQuestionair, UserQuestionair, ListingQuestionair
+from .models import listing, notifications, BasicQuestionair, UserQuestionair, ListingQuestionair, FavouriteListing
 
 
 # Register your models here.
@@ -12,3 +12,4 @@ admin.site.register(notifications)
 admin.site.register(BasicQuestionair)
 admin.site.register(UserQuestionair)
 admin.site.register(ListingQuestionair)
+admin.site.register(FavouriteListing)

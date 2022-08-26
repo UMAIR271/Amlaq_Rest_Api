@@ -7,8 +7,8 @@ from django.shortcuts import render
 from rest_framework.views import APIView
 
 from .serializers import ListingSerializer, NotificationSerializer, BasicQuestionSerializer, UserQuestionSerializer, \
-    ListingQuestionSerializer
-from .models import listing, notifications, BasicQuestionair, UserQuestionair, ListingQuestionair
+    ListingQuestionSerializer, FavouriteListingSerializer
+from .models import listing, notifications, BasicQuestionair, UserQuestionair, ListingQuestionair, FavouriteListing
 from rest_framework import viewsets
 from rest_framework.response import Response
 
@@ -171,3 +171,18 @@ class UpdateListingQuestionView(APIView):
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class FavouriteLisitingView(viewsets.ModelViewSet):
+    serializer_class = FavouriteListingSerializer
+    queryset = FavouriteListing.objects.all()
+
+
+class UpdateFavouriteView(generics.UpdateAPIView):
+    queryset = FavouriteListing.objects.all()
+    serializer_class = FavouriteListingSerializer
+
+    def get(self, request, pk):
+        snippet = self.get_object()
+        serializer = self.serializer_class(snippet)
+        return Response(serializer.data)

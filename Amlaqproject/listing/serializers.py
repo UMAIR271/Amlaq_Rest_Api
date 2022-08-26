@@ -1,4 +1,4 @@
-from .models import listing, notifications, BasicQuestionair, UserQuestionair, ListingQuestionair
+from .models import listing, notifications, BasicQuestionair, UserQuestionair, ListingQuestionair, FavouriteListing
 from rest_framework import serializers
 
 
@@ -31,3 +31,8 @@ class ListingQuestionSerializer(serializers.ModelSerializer):
         model = ListingQuestionair
         fields = '__all__'
 
+
+class FavouriteListingSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FavouriteListing
+        fields = '__all__'
