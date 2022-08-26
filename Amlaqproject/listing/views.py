@@ -1,12 +1,20 @@
 from django.shortcuts import render
+from django.http import Http404
+import json
 from django.shortcuts import get_object_or_404
 # Create your views here.
 from rest_framework import status
+from rest_framework import generics
+from rest_framework.parsers import FormParser, MultiPartParser
 from django.shortcuts import render
-from listing.serializers import ListingSerializer
+from listing.serializers import *
+from django.db.models import Q
 from listing.models import listing
 from rest_framework import viewsets
 from rest_framework.response import Response
+from rest_framework.views import APIView
+from django_filters.rest_framework import DjangoFilterBackend
+
 
 # Create your views here.
 
@@ -75,4 +83,65 @@ class ListingViewSet(viewsets.ViewSet):
         snippet.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-        
+class ListingView(viewsets.ModelViewSet):
+    queryset = listing.objects.all()
+    serializer_class = ListingSerializer
+    parser_classes = (FormParser, MultiPartParser)
+
+class UpdateUserQuestionView(APIView):
+    # permission_classes = (IsAuthenticated,)
+    serializer_class = ListingSerializer
+
+    def get_object(self):
+        try:
+            return listing.objects.get(id=self.kwargs.get('pk'))
+        except listing.DoesNotExist:
+            raise Http404
+
+    def get(self, request, pk):
+        snippet = self.get_object()
+        serializer = self.serializer_class(snippet)
+        return Response(serializer.data)
+
+    def put(self, request, pk):
+        object = self.get_object()
+        serializer = self.serializer_class(object, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class ListMedia(generics.ListCreateAPIView):
+    queryset = Listing_Media.objects.all()
+    serializer_class = Listing_MediaSerializer
+
+class ListMediaUdate(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Listing_Media.objects.all()
+    serializer_class = Listing_MediaSerializer
+
+class FindProperty(APIView):
+    serializer_class = ListingSerializer
+    def get(self, request):
+        try:
+            data= request.data
+            if 'project_name' in str(data):
+                query = listing.objects.filter(project_name__contains = data['project_name'])
+                print(query)
+                serializer = self.serializer_class(query, many = True)
+                return Response(serializer.data)
+            elif 'street_Address' in str(data):
+                query = listing.objects.filter(street_Address__contains = data["street_Address"])
+                print(query)
+                serializer = self.serializer_class(query, many = True)
+                return Response(serializer.data)
+            else:
+                raise Http404
+        except listing.DoesNotExist:
+            raise Http404
+    
+
+class filterViewSet(generics.ListAPIView):
+    queryset = listing.objects.all()
+    serializer_class = ListingSerializer
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ['Type','Bedrooms','Property_Type', 'project_name','street_Address']
