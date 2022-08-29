@@ -23,4 +23,16 @@ urlpatterns = [
                                               "update": "update"}), name='favourite_listing'),
 
     path('update/favourite/<int:pk>/', views.UpdateFavouriteView.as_view(), name="update_favourite_listing"),
+
+    path('appointment/',
+         views.AppointmentView.as_view({"get": "list", "post": "create", "delete": "destroy",
+                                        "update": "update"}), name='appointment'),
+
+    path('update/appointment/<int:pk>/', views.UpdateAppointmentView.as_view(), name="update_favourite_listing"),
+
+    path('slots/',
+         views.SlotsView.as_view({"get": "list", "post": "create", "delete": "destroy",
+                                  "update": "update"}), name='slots'),
+
+    path('update/slots/<int:pk>/', views.UpdateSlotsView.as_view(), name="update_slots"),
 ]

@@ -7,6 +7,7 @@ from django.dispatch import receiver
 from loginapp.models import User
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
+from django.utils.translation import gettext_lazy as _
 
 
 class listing(models.Model):
@@ -107,3 +108,38 @@ class FavouriteListing(models.Model):
 
     def __str__(self):
         return self.user
+
+
+class Appointment(models.Model):
+    NULL = 'null'
+    APPROVED = 'approved'
+    DECLINE = 'declined'
+    STATUS = (
+        (NULL, _('Null')),
+        (APPROVED, _('Approved')),
+        (DECLINE, _('Decline')),
+    )
+    user1 = models.ForeignKey(User, on_delete=models.CASCADE, related_name="first_user")
+    user2 = models.ForeignKey(User, on_delete=models.CASCADE, related_name="second_user")
+    listing = models.ForeignKey(listing, on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now=True)
+    status = models.CharField(max_length=50, choices=STATUS)
+
+    def __str__(self):
+        return self.STATUS
+
+
+class AvailableSlots(models.Model):
+    AVAILABLE = 'available'
+    BOOKED = 'booked'
+    SLOT_STATUS = (
+        (AVAILABLE, _('Available')),
+        (BOOKED, _('Booked')),
+    )
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    listing = models.ForeignKey(listing, on_delete=models.CASCADE)
+    time_slots = models.TimeField()
+    slot_status = models.CharField(max_length=50, choices=SLOT_STATUS)
+
+    def __str__(self):
+        return self.SLOT_STATUS

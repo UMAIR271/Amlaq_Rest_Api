@@ -7,8 +7,9 @@ from django.shortcuts import render
 from rest_framework.views import APIView
 
 from .serializers import ListingSerializer, NotificationSerializer, BasicQuestionSerializer, UserQuestionSerializer, \
-    ListingQuestionSerializer, FavouriteListingSerializer
-from .models import listing, notifications, BasicQuestionair, UserQuestionair, ListingQuestionair, FavouriteListing
+    ListingQuestionSerializer, FavouriteListingSerializer, AppointmentSerializer, SlotstSerializer
+from .models import listing, notifications, BasicQuestionair, UserQuestionair, ListingQuestionair, FavouriteListing, \
+    Appointment, AvailableSlots
 from rest_framework import viewsets
 from rest_framework.response import Response
 
@@ -181,6 +182,36 @@ class FavouriteLisitingView(viewsets.ModelViewSet):
 class UpdateFavouriteView(generics.UpdateAPIView):
     queryset = FavouriteListing.objects.all()
     serializer_class = FavouriteListingSerializer
+
+    def get(self, request, pk):
+        snippet = self.get_object()
+        serializer = self.serializer_class(snippet)
+        return Response(serializer.data)
+
+
+class AppointmentView(viewsets.ModelViewSet):
+    serializer_class = AppointmentSerializer
+    queryset = Appointment.objects.all()
+
+
+class UpdateAppointmentView(generics.UpdateAPIView):
+    queryset = Appointment.objects.all()
+    serializer_class = AppointmentSerializer
+
+    def get(self, request, pk):
+        snippet = self.get_object()
+        serializer = self.serializer_class(snippet)
+        return Response(serializer.data)
+
+
+class SlotsView(viewsets.ModelViewSet):
+    serializer_class = SlotstSerializer
+    queryset = AvailableSlots.objects.all()
+
+
+class UpdateSlotsView(generics.UpdateAPIView):
+    queryset = AvailableSlots.objects.all()
+    serializer_class = SlotstSerializer
 
     def get(self, request, pk):
         snippet = self.get_object()

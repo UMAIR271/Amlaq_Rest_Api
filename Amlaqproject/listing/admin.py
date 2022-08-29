@@ -1,5 +1,6 @@
 from django.contrib import admin
-from .models import listing, notifications, BasicQuestionair, UserQuestionair, ListingQuestionair, FavouriteListing
+from .models import listing, notifications, BasicQuestionair, UserQuestionair, ListingQuestionair, FavouriteListing,\
+    Appointment, AvailableSlots
 
 
 # Register your models here.
@@ -13,3 +14,5 @@ admin.site.register(BasicQuestionair)
 admin.site.register(UserQuestionair)
 admin.site.register(ListingQuestionair)
 admin.site.register(FavouriteListing)
+admin.site.register(Appointment)
+admin.site.register(AvailableSlots)
