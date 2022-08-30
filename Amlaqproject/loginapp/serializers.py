@@ -11,7 +11,7 @@ from .register import register_social_user
 import os
 from rest_framework.exceptions import AuthenticationFailed
 from rest_framework import serializers
-from loginapp.models import User
+from .models import User
 from .utils import Util
 
 class UserRegistrationSerializer(serializers.ModelSerializer):

@@ -1,7 +1,7 @@
 from django.core.mail import EmailMessage
 import os 
 import random
-from loginapp.models import User
+from .models import User
 
 
 class Util:

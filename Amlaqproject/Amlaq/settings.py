@@ -32,6 +32,8 @@ ALLOWED_HOSTS = ['*']
 # Application definition
 
 INSTALLED_APPS = [
+    'listing',
+    'loginapp',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -43,9 +45,8 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt.token_blacklist',
     "corsheaders",
     'drf_yasg',
-    "listing",
-    "loginapp",
     'social_django',
+    'channels',
 ]
 
 MIDDLEWARE = [
@@ -78,11 +79,21 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'Amlaq.wsgi.application'
-# WSGI_APPLICATION = 'wsgi.application'
+ASGI_APPLICATION = 'Amlaq.asgi.application'
 
 
 # Database
 # https://docs.djangoproject.com/en/3.0/ref/settings/#databases
+
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [("127.0.0.1", 6379)],
+        },
+    },
+}
 
 DATABASES = {
     'default': {
@@ -114,7 +125,7 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework_simplejwt.authentication.JWTAuthentication',
      ],
-     'EXCEPTION_HANDLER': 'Amlaq.loginapp.custom_exception_handler'
+     # 'EXCEPTION_HANDLER': 'Amlaq.loginapp.custom_exception_handler'
 }
 
 AUTHENTICATION_BACKENDS = (
