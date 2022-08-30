@@ -8,6 +8,8 @@ urlpatterns = [
     path('image/update/<int:pk>/', ListMediaUdate.as_view(),name="update_basic"),
     path('property/', FindProperty.as_view(),name="get_property"),
     path('find/', filterViewSet.as_view(),name="get_property"),
+    path('post/', AddListingPostData.as_view(),name="post"),
+
 
 
     

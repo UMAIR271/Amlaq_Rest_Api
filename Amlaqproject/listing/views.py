@@ -1,3 +1,4 @@
+from email.mime import image
 from django.shortcuts import render
 from django.http import Http404
 import json
@@ -12,23 +13,10 @@ from django.db.models import Q
 from listing.models import listing
 from rest_framework import viewsets
 from rest_framework.response import Response
+from django.http import QueryDict
 from rest_framework.views import APIView
 from django_filters.rest_framework import DjangoFilterBackend
 
-
-# Create your views here.
-
-
-# class ListingModelViewSets(viewsets.ModelViewSet):
-#     queryset = listing.objects.all()
-#     serializer_class = ListingSerializer
-
-# class ListingViewSet(viewsets.ViewSet):
-#     """
-#     A viewset for viewing and editing user instances.
-#     """
-#     serializer_class = ListingSerializer
-#     queryset = listing.objects.all()
 
 class ListingViewSet(viewsets.ViewSet):
     """
@@ -86,7 +74,6 @@ class ListingViewSet(viewsets.ViewSet):
 class ListingView(viewsets.ModelViewSet):
     queryset = listing.objects.all()
     serializer_class = ListingSerializer
-    parser_classes = (FormParser, MultiPartParser)
 
 class UpdateUserQuestionView(APIView):
     # permission_classes = (IsAuthenticated,)
@@ -124,24 +111,38 @@ class FindProperty(APIView):
     def get(self, request):
         try:
             data= request.data
-            if 'project_name' in str(data):
-                query = listing.objects.filter(project_name__contains = data['project_name'])
-                print(query)
-                serializer = self.serializer_class(query, many = True)
-                return Response(serializer.data)
-            elif 'street_Address' in str(data):
-                query = listing.objects.filter(street_Address__contains = data["street_Address"])
-                print(query)
-                serializer = self.serializer_class(query, many = True)
-                return Response(serializer.data)
-            else:
-                raise Http404
+            query = listing.objects.filter(Q(project_name__contains = data['query']) | Q(street_Address__contains = data["query"]))
+            print(query)
+            serializer = self.serializer_class(query, many = True)
+            return Response(serializer.data)
         except listing.DoesNotExist:
             raise Http404
-    
+
+class AddListingPostData(APIView):
+    queryset = Listing_Media.objects.all()
+    serializer_class = AddListingSerializer  
+
+    def post(self, request):
+        try:
+            data = request.data
+            # image = {}
+            # var = 'list'
+            # data= dict(request.data) 
+            # for key, value in data.items():
+            #     if var == key:
+            #         image[key] = value
+            # data.pop("list")
+            serializer = self.serializer_class(data=data)
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            return Response(serializer.data)
+        except listing.DoesNotExist:
+            raise Http404
+
 
 class filterViewSet(generics.ListAPIView):
     queryset = listing.objects.all()
     serializer_class = ListingSerializer
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ['Type','Bedrooms','Property_Type', 'project_name','street_Address']
+ 

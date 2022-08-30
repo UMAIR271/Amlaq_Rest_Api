@@ -114,11 +114,12 @@ class Property_Type(models.Model):
 
 
 class Listing_Media(models.Model):
-    listing = models.ForeignKey(listing, related_name="list", on_delete=models.CASCADE )
     images_path = models.ImageField(upload_to ='uploads/')
+    listing = models.ForeignKey(listing, related_name="list", on_delete=models.CASCADE )
+
 
     def __str__(self) -> str:
-        return str({'images':self.images_path})
+        return str({self.images_path})
 
 
 
