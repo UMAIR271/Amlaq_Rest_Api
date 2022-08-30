@@ -8,9 +8,9 @@ from rest_framework import status
 from rest_framework import generics
 from rest_framework.parsers import FormParser, MultiPartParser
 from django.shortcuts import render
-from listing.serializers import *
+from .serializers import *
 from django.db.models import Q
-from listing.models import listing
+from .models import listing
 from rest_framework import viewsets
 from rest_framework.response import Response
 from django.http import QueryDict
@@ -31,7 +31,7 @@ class ListingViewSet(viewsets.ViewSet):
         queryset = listing.objects.all()
         serializer = ListingSerializer(queryset, many=True)
         return Response(serializer.data)
-        
+
     def retrieve(self, request, pk=None):
         try:
             snippet = listing.objects.get(pk=pk)
@@ -71,9 +71,11 @@ class ListingViewSet(viewsets.ViewSet):
         snippet.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
+
 class ListingView(viewsets.ModelViewSet):
     queryset = listing.objects.all()
     serializer_class = ListingSerializer
+
 
 class UpdateUserQuestionView(APIView):
     # permission_classes = (IsAuthenticated,)
@@ -98,51 +100,61 @@ class UpdateUserQuestionView(APIView):
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
 class ListMedia(generics.ListCreateAPIView):
     queryset = Listing_Media.objects.all()
     serializer_class = Listing_MediaSerializer
+
 
 class ListMediaUdate(generics.RetrieveUpdateDestroyAPIView):
     queryset = Listing_Media.objects.all()
     serializer_class = Listing_MediaSerializer
 
+
 class FindProperty(APIView):
     serializer_class = ListingSerializer
+
     def get(self, request):
         try:
-            data= request.data
-            query = listing.objects.filter(Q(project_name__contains = data['query']) | Q(street_Address__contains = data["query"]))
-            print(query)
-            serializer = self.serializer_class(query, many = True)
-            return Response(serializer.data)
-        except listing.DoesNotExist:
-            raise Http404
-
-class AddListingPostData(APIView):
-    queryset = Listing_Media.objects.all()
-    serializer_class = AddListingSerializer  
-
-    def post(self, request):
-        try:
             data = request.data
-            # image = {}
-            # var = 'list'
-            # data= dict(request.data) 
-            # for key, value in data.items():
-            #     if var == key:
-            #         image[key] = value
-            # data.pop("list")
-            serializer = self.serializer_class(data=data)
-            serializer.is_valid(raise_exception=True)
-            serializer.save()
+            query = listing.objects.filter(
+                Q(project_name__contains=data['query']) | Q(street_Address__contains=data["query"]))
+            print(query)
+            serializer = self.serializer_class(query, many=True)
             return Response(serializer.data)
         except listing.DoesNotExist:
             raise Http404
+
+
+class AddListingPostData(viewsets.ModelViewSet):
+    serializer_class = AddListingSerializer
+    queryset = Listing_Media.objects.all()
+
+
+# class AddListingPostData(APIView):
+#     queryset = Listing_Media.objects.all()
+#     serializer_class = AddListingSerializer
+#
+#     def post(self, request):
+#         try:
+#             data = request.data
+#             # image = {}
+#             # var = 'list'
+#             # data= dict(request.data)
+#             # for key, value in data.items():
+#             #     if var == key:
+#             #         image[key] = value
+#             # data.pop("list")
+#             serializer = self.serializer_class(data=data)
+#             serializer.is_valid(raise_exception=True)
+#             serializer.save()
+#             return Response(serializer.data)
+#         except listing.DoesNotExist:
+#             raise Http404
 
 
 class filterViewSet(generics.ListAPIView):
     queryset = listing.objects.all()
     serializer_class = ListingSerializer
     filter_backends = [DjangoFilterBackend]
-    filterset_fields = ['Type','Bedrooms','Property_Type', 'project_name','street_Address']
- 
+    filterset_fields = ['Type', 'Bedrooms', 'Property_Type', 'project_name', 'street_Address']
