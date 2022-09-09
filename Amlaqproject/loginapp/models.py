@@ -2,6 +2,7 @@ from pickle import TRUE
 from django.db import models
 from django.contrib.auth.models import BaseUserManager, AbstractBaseUser
 from rest_framework_simplejwt.tokens import RefreshToken
+from django.core.validators import RegexValidator
 
 
 # Create your models here.
@@ -49,11 +50,21 @@ class User(AbstractBaseUser):
         max_length=255,
         unique=True,
     )
+    email_varified = models.BooleanField(default=False)
     name = models.CharField(max_length=200)
-    is_varified = models.BooleanField(default=False)
+    phone_regex = RegexValidator(
+        regex=r'^\+?1?\d{9,15}$',
+        message="Phone number must be entered in the format: '+999999999'. Up to 15 digits allowed."
+        )
+    phone_number = models.CharField(
+        validators=[phone_regex], 
+        max_length=17, blank=True
+        ) # Validators should be a list
+    phone_varified = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
     is_admin = models.BooleanField(default=False)
-    otp = models.CharField(max_length=6, null= True, blank=True)
+    email_otp = models.CharField(max_length=6, null= True, blank=True)
+    phone_otp = models.CharField(max_length=6, null= True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     auth_provider = models.CharField(

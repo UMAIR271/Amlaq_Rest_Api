@@ -62,12 +62,12 @@ class UserRegistrationView(GenericAPIView):
                 user_data = serializer.data
                 user = User.objects.get(email = user_data['email'])
                 data = User.objects.filter(email = user_data['email']).values(
-                    'id', 'email','name','is_varified','is_active','created_at','updated_at','auth_provider')
+                    'id', 'email','name','email_varified','is_active','created_at','updated_at','auth_provider')
                 print(data)
                 token = get_tokens_for_user(user)
                 # data = {'to_email': user.email,'subject': 'Verify your email'}
                 # Util.send_email(data)
-                return Response({ "message": "Registraion success","token":token,"user_obj":data}, status = status.HTTP_201_CREATED)
+                return Response({ "message": "Registraion success","token":token,"user_obj":data}, status = status.HTTP_200_OK)
             
             for key, values in serializer.errors.items():
                 error = [value[:] for value in values]
@@ -96,7 +96,7 @@ class SendOTP(APIView):
 
                 data = {'to_email': user.email,'subject': 'Verify your email'}
                 Util.send_email(data)
-                return Response({ "message": "Please Check your email"}, status = status.HTTP_201_CREATED)
+                return Response({ "message": "Please Check your email"}, status = status.HTTP_200_OK)
             
             for key, values in serializer.errors.items():
                 error = [value[:] for value in values]
@@ -223,7 +223,7 @@ class UserProfileView(APIView):
         if not user:
                     return Response({ "message": "invalid Email", 'error': "invalid Email" }, status = status.HTTP_401_UNAUTHORIZED)
         user_object = User.objects.filter(email = email).values(
-                    'id', 'email','name','is_varified','is_active','created_at','updated_at','auth_provider')
+                    'id', 'email','name','email_varified','is_active','created_at','updated_at','auth_provider')
         return Response({'data':data,'user_object':user_object}, status=status.HTTP_200_OK)
 
 
@@ -291,9 +291,57 @@ class UserPasswordResetView(GenericAPIView):
         serializer = self.serializer_class(data=request.data , context ={'uid':uid,'token':token})
         serializer.is_valid(raise_exception=True)
         return Response({"mas":"Password Reset successfully"},status=status.HTTP_200_OK)
-        
-        
 
+
+class send_phone_otp(APIView):
+    def post(self, request):
+        data = request.data 
+        print(data)
+        # serializer =  SendOtpSerializers(data=data)
+        # if serializer.is_valid():
+        if data.get('phone_number') is None:
+            return Response(
+                {"message":"please enter the phone_number"},
+                status=status.HTTP_400_BAD_REQUEST
+            )  
+        if User.objects.filter(phone_number=data.get('phone_number')).exists():
+            return Response(
+                {"message":"The phone_number is already exist"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        if data.get('email') is None:
+            return Response(
+                {"message":"please enter the email"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        data =  {
+            'email': data.get('email'),
+            'phone_number': data.get('phone_number')
+            } 
+        print("pak")   
+        Util.send_otp_to_phone(data)
+        return Response({ "message": "Please Check your Phone"}, status = status.HTTP_200_OK)
+
+class VerifyPhoneOTP(APIView):
+
+    def post(self, request):
+        try:
+            print("enter")
+            data = request.data 
+            phone_number = data.get('phone_number')
+            otp = data.get('otp')
+            user = User.objects.filter(phone_number = phone_number)
+            print(user)
+            if not user.exists():
+                return Response({ "message": "invalid phone_number", 'error': "invalid phone_number" }, status = status.HTTP_401_UNAUTHORIZED)
+            if user[0].phone_otp != otp:
+                return Response({ "message": "OTP is Wrong", 'error': "OTP is Wrong" }, status = status.HTTP_401_UNAUTHORIZED)
+            user = user.first()
+            user.phone_varified = True
+            user.save()
+            return Response({ "message": "Phone_number verified","data":"Phone_number verified",}, status = status.HTTP_201_CREATED)
+        except Exception as e:
+            return Response({'error': e }, status = status.HTTP_404_NOT_FOUND)
 
 class GoogleSocialAuthView(GenericAPIView):
 

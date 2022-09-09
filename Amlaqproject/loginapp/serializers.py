@@ -38,6 +38,9 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
 class SendOtpSerializers(serializers.Serializer):
     email = serializers.EmailField()
 
+# class SendPhoneOtpSerializers(serializers.Serializer):
+#     email = serializers.EmailField()
+#     phone_number = serializers.CharField()
 
 class VerifyAccountSerializers(serializers.Serializer):
     email = serializers.EmailField()
