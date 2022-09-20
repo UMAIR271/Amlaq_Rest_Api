@@ -2,6 +2,7 @@ from distutils.log import error
 from rest_framework.response import Response
 from rest_framework import generics
 from rest_framework.generics import GenericAPIView
+from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework import status
 from rest_framework.views import APIView
 import json
@@ -67,7 +68,7 @@ class UserRegistrationView(GenericAPIView):
                 token = get_tokens_for_user(user)
                 # data = {'to_email': user.email,'subject': 'Verify your email'}
                 # Util.send_email(data)
-                return Response({ "message": "Registraion success","token":token,"user_obj":data}, status = status.HTTP_200_OK)
+                return Response({ "message": "Registraion success","token":token['access'],"user_obj":data}, status = status.HTTP_200_OK)
             
             for key, values in serializer.errors.items():
                 error = [value[:] for value in values]
@@ -124,10 +125,11 @@ class VerifyOTP(APIView):
                 print(user)
                 if not user.exists():
                     return Response({ "message": "invalid Email", 'error': "invalid Email" }, status = status.HTTP_401_UNAUTHORIZED)
-                if user[0].otp != otp:
+                print(otp)
+                if user[0].email_otp != otp:
                     return Response({ "message": "OTP is Wrong", 'error': "OTP is Wrong" }, status = status.HTTP_401_UNAUTHORIZED)
                 user = user.first()
-                user.is_varified = True
+                user.email_varified = True
                 user.save()
                 return Response({ "message": "Account verified","data":"Account verified",}, status = status.HTTP_201_CREATED)
             
@@ -139,7 +141,7 @@ class VerifyOTP(APIView):
 
 
         except Exception as e:
-            return Response({'error': e }, status = status.HTTP_404_NOT_FOUND)
+            return Response({'error': str(e) }, status = status.HTTP_404_NOT_FOUND)
             
 
 
@@ -215,6 +217,8 @@ class UserProfileView(APIView):
     # renderer_classes = [UserRenderers]
     permission_classes = [IsAuthenticated]
     serializer_class = UserProfileSerializer
+    parser_classes = (FormParser, MultiPartParser)
+
     def get(self, request, format = None):
         serializer = self.serializer_class(request.user)
         data = serializer.data

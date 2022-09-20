@@ -5,6 +5,7 @@ from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from xml.dom import ValidationErr
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from .register import register_social_user
+from listing.serializers import *
 from rest_framework import serializers
 from . import google
 import os
@@ -63,11 +64,18 @@ class UserLoginSerializer(serializers.ModelSerializer):
         fields = ['email','password']
 
 
+# class UserProfileSerializer(serializers.ModelSerializer):
+#     email = serializers.EmailField(max_length = 255)
+#     class Meta:
+#         model = User
+#         fields = ['email','password']
+
 class UserProfileSerializer(serializers.ModelSerializer):
-    email = serializers.EmailField(max_length = 255)
+    userdata = UserRegistrationSerializer(many=True, read_only=True)
+    listingdata = getListingSerializer(many=True, read_only=True)
     class Meta:
         model = User
-        fields = ['email','password']
+        fields =fields = '__all__'
 
 
 class UserChangePasswordSerlizer(serializers.Serializer):
@@ -220,4 +228,7 @@ class GoogleSocialAuthSerializer(serializers.Serializer):
 
 
 
-
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = '__all__'

@@ -1,4 +1,4 @@
-from pickle import TRUE
+from Amlaq import settings
 from django.db import models
 from django.contrib.auth.models import BaseUserManager, AbstractBaseUser
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -103,3 +103,4 @@ class User(AbstractBaseUser):
         "Is the user a member of staff?"
         # Simplest possible answer: All admins are staff
         return self.is_admin
+

@@ -1,15 +1,35 @@
 from email.mime import image
 from .models import *
 from rest_framework import serializers
+from loginapp.models import *
+from loginapp.serializers import *
 
 class Listing_MediaSerializer(serializers.ModelSerializer):
     # id = serializers.IntegerField(required=False)
-    image_url = serializers.SerializerMethodField('get_image_url')
+    image_path = serializers.SerializerMethodField('get_image_url')
     class Meta:
         model = Listing_Media
-        fields = ('images_path', 'listing', 'image_url')
+        fields = ('images_Url', 'listing', 'image_path')
     def get_image_url(self, obj):
-        return obj.images_path.url
+        return obj.images_Url.url
+
+class verifedImageSerializer(serializers.ModelSerializer):
+    # id = serializers.IntegerField(required=False)
+    image_path = serializers.SerializerMethodField('get_image_url')
+    class Meta:
+        model = property_verification
+        fields = ('propertyVerificationImage', 'listing', 'image_path')
+    def get_image_url(self, obj):
+        return obj.propertyVerificationImage.url
+
+class floorplaneSerializer(serializers.ModelSerializer):
+    # id = serializers.IntegerField(required=False)
+    image_url = serializers.SerializerMethodField('get_image_url')
+    class Meta:
+        model = floorPlane
+        fields = ('floorPlaneImage', 'listing', 'image_url')
+    def get_image_url(self, obj):
+        return obj.floorPlaneImage.url
 
 class CompressImageSerializer(serializers.ModelSerializer):
     # id = serializers.IntegerField(required=False)
@@ -56,18 +76,48 @@ class porpertyTypeSerializer(serializers.ModelSerializer):
         model = Property_Type
         fields = '__all__'
 
-class ListingSerializer(serializers.ModelSerializer):
-    list = serializers.StringRelatedField(many=True)
-    compress = serializers.StringRelatedField(many=True)
-    property = serializers.StringRelatedField(many=True)
-    Amenities = serializers.StringRelatedField(many=True)
+class getListingSerializer(serializers.ModelSerializer):
+    # user = UserProfileSerializer(many=True, read_only=True)
+    username = serializers.CharField(
+        source="user_name.email", read_only=True)
+    list = Listing_MediaSerializer(many=True, read_only=True)
+    property = porpertyTypeSerializer(many=True, read_only=True)
+    Amenities = AmenitiesSerializer(many=True, read_only=True)
+    floorplane = floorplaneSerializer(many=True, read_only=True)
+    propertyVerificationImage = verifedImageSerializer(many=True, read_only=True)
+
     
     class Meta:
         model = listing
         fields = '__all__'
 
+class filterserializers(serializers.ModelSerializer):
+    Amenities = AmenitiesSerializer(many=True, read_only=True)
+    class Meta:
+        model = Amenities
+        fields = '__all__'
 
 
+
+class  postListingSerializer(serializers.ModelSerializer):
+    list = serializers.StringRelatedField(many=True)
+    property = serializers.StringRelatedField(many=True)
+    Amenities = serializers.StringRelatedField(many=True)
+    floorplane = serializers.StringRelatedField(many=True)
+    propertyVerificationImage = serializers.StringRelatedField(many=True)
+    
+    class Meta:
+        model = listing
+        fields = '__all__'
+
+# class userListingSerializers(serializers.ModelSerializer):
+#     user = UserRegistrationSerializer(many=True, read_only=True)
+
+
+    
+#     class Meta:
+#         model = User
+#         fields = '__all__'
 
 # class NotificationSerializer(serializers.ModelSerializer):
 #     class Meta:
@@ -96,6 +146,12 @@ class ListingQuestionSerializer(serializers.ModelSerializer):
 class FavouriteListingSerializer(serializers.ModelSerializer):
     class Meta:
         model = FavouriteListing
+        fields = '__all__'
+
+
+class interestedListingSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = interested
         fields = '__all__'
 
 

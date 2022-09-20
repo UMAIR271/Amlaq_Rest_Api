@@ -45,11 +45,6 @@ class listing(models.Model):
 
 
     )
-    Purpose_Choies = (
-        ("Unfurnised","Unfurnised"),
-        ("semi-furnised","semi-furnised"),
-        ("furnised","furnised"),
-        )
     PROPERTY_TENURE = (
         ("Unfurnised","Unfurnised"),
         ("semi-furnised","semi-furnised"),
@@ -74,7 +69,7 @@ class listing(models.Model):
         ("Cash","Cash"),
     )
 
-    user_name = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE,)
+    user_id = models.ForeignKey(settings.AUTH_USER_MODEL, related_name="user", on_delete=models.CASCADE,)
     Title = models.CharField(max_length=50)
     Descriptions = models.CharField(max_length=300)
     Type = models.CharField(max_length=11, choices=TYPE_CHOIES)
@@ -102,6 +97,13 @@ class listing(models.Model):
     property_location = models.CharField(max_length=300)
     street_Address = models.CharField(max_length=300)
     project_name = models.CharField(max_length=300)
+    created_at = models.DateTimeField(auto_now=True)
+    list_verified = models.BooleanField(default=False, null=True)
+    latitude = models.FloatField(max_length=300, null=True)
+    longitude = models.FloatField(max_length=300, null=True)
+
+
+
 
 
 class Property_Type(models.Model):
@@ -123,20 +125,37 @@ class Property_Type(models.Model):
     listing = models.ForeignKey(listing, related_name="property", on_delete=models.CASCADE )
     property_type = models.CharField(max_length=16, choices=Property_Choices )
     def __str__(self) -> str:
-        return str({'property_type':self.property_type})
+        return (self.property_type)
 
 
-
-
+class userprofile(models.Model):
+    userprofile = models.ForeignKey(settings.AUTH_USER_MODEL, related_name="userprofiledata", on_delete=models.CASCADE, )
+    listing = models.ForeignKey(listing, related_name="userlisting", on_delete=models.CASCADE, )
+    profile_image = models.ImageField(upload_to ='uploads/')
 
 class Listing_Media(models.Model):
-    images_path = models.ImageField(upload_to ='uploads/')
+    images_Url = models.ImageField(upload_to ='uploads/')
     listing = models.ForeignKey(listing, related_name="list", on_delete=models.CASCADE )
 
 
     def __str__(self) -> str:
-        return str({
-            "image": self.images_path})
+        return (self.images_path)
+
+class floorPlane(models.Model):
+    floorPlaneImage = models.ImageField(upload_to ='uploads/')
+    listing = models.ForeignKey(listing, related_name="floorplane", on_delete=models.CASCADE )
+
+
+    def __str__(self) -> str:
+        return (self.floorPlaneImage)
+
+class property_verification(models.Model):
+    propertyVerificationImage = models.ImageField(upload_to ='uploads/')
+    listing = models.ForeignKey(listing, related_name="propertyVerificationImage", on_delete=models.CASCADE )
+
+
+    def __str__(self) -> str:
+        return (self.propertyVerificationImage)
 
 class compress_image(models.Model):
     images_path = models.ImageField(upload_to ='compress/',  verbose_name=_("Photo"))
@@ -157,9 +176,19 @@ class Amenities(models.Model):
     listing = models.ForeignKey(listing, related_name="Amenities", on_delete=models.CASCADE )
     Amenities_Name = models.CharField(max_length=20, choices=AMENITIES )
     Cration_Time = models.DateTimeField(auto_now_add=True)
-    def __str__(self) -> str:
-        return str({'Amenities':self.Amenities_Name})
+    def __str__(self):
+        # data = {"id": self.id, "Amenities_Name": self.Amenities_Name }
+        return str(self.id)
 
+
+class interested(models.Model):
+   user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+   listing = models.ForeignKey(listing, on_delete=models.CASCADE, null=True, blank=True)
+   created_at = models.DateTimeField(auto_now=True)
+   is_interested = models.BooleanField(default=False)
+   
+   def __str__(self) -> str:
+        return str(self.user)
 
 class Listing_Amenities(models.Model):
     listing = models.ForeignKey(listing, on_delete=models.CASCADE)
@@ -205,8 +234,8 @@ class FavouriteListing(models.Model):
     listing = models.ForeignKey(listing, on_delete=models.CASCADE, null=True, blank=True)
     created_at = models.DateTimeField(auto_now=True)
 
-    def __str__(self):
-        return self.user
+    def __str__(self)-> str:
+        return str(self.user) 
 
 
 class Appointment(models.Model):

@@ -14,6 +14,11 @@ admin.site.register(ListingQuestionair)
 admin.site.register(FavouriteListing)
 admin.site.register(Appointment)
 admin.site.register(AvailableSlots)
+admin.site.register(floorPlane)
+admin.site.register(interested)
+admin.site.register(userprofile)
+
+
 
 
 
