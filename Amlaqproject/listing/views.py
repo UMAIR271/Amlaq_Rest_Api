@@ -1,5 +1,3 @@
-from email.mime import image
-from tkinter import image_names
 from django.shortcuts import render
 from django.http import Http404
 import json
@@ -8,6 +6,8 @@ from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework import generics
 from rest_framework.parsers import FormParser, MultiPartParser
+from rest_framework.permissions import IsAuthenticated
+from rest_framework_simplejwt.authentication import JWTAuthentication
 from django.shortcuts import render
 from listing.serializers import *
 from django.db.models import Q
@@ -22,13 +22,6 @@ from rest_framework.views import APIView
 from django_filters.rest_framework import DjangoFilterBackend
 from .helper import *
 
-
-# class userListingView(viewsets.ModelViewSet):
-#     queryset = User.objects.all()
-#     serializer_class = userListingSerializers
-#     parser_classes = (FormParser, MultiPartParser)
-#     pagination_class = myCursorPagination
-
 class ListingView(viewsets.ModelViewSet):
     queryset = listing.objects.all()
     serializer_class = getListingSerializer
@@ -36,29 +29,70 @@ class ListingView(viewsets.ModelViewSet):
     pagination_class = myCursorPagination
 
 class GetListingView(APIView):
-    # permission_classes = (IsAuthenticated,)
+    permission_classes = [IsAuthenticated]
     serializer_class = getListingSerializer
+    
+
 
     def get_object(self):
+
         try:
             return listing.objects.get(id=self.kwargs.get('pk'))
+            
         except listing.DoesNotExist:
             raise Http404
 
     def get(self, request, pk):
-        print("hello")
+        user = request.user.id
+        print(user)
         snippet = self.get_object()
         serializer = self.serializer_class(snippet)
-        return Response(serializer.data)
+        pub=Listing_Amenities.objects.filter(listing =  pk).select_related("Amenities_ID").values("Amenities_ID__id","Amenities_ID__Amenities_Name" )
+        data = serializer.data
+        data['Amenities_ID__Amenities_Name'] = pub
+        print(pub)
+        print(type(data))
+        return Response(data)
 
     def put(self, request, pk):
         object = self.get_object()
+        v1 = []
+            # id = Listing_Amenities.objects.filter(listing=self.kwargs.get('pk'))
+        var = Listing_Amenities.objects.select_related().filter(listing = pk)
+        print(var)
+        for i in var:
+            print(i.Amenities_ID)
+        data=Amenities.objects.filter(id = 2).values("Amenities_Name")
+        v1.append(data)
         serializer = self.serializer_class(object, data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+class GetListingById(APIView):
+    serializer_class = getListingSerializer
+    parser_classes = (FormParser, MultiPartParser)
+
+    def get_object(self):
+        try:
+            id = Listing_Amenities.objects.get(listing=self.kwargs.get('pk'))
+            print(id)
+            for i in id:
+               print(i.Amenities_ID.Amenities_Name)
+            return listing.objects.get(id=self.kwargs.get('pk'))
+        except listing.DoesNotExist:
+            raise Http404
+
+    def get(self, request, pk):
+        user = request.user
+        print(user)
+        snippet = self.get_object()
+        serializer = self.serializer_class(snippet)
+        return Response(serializer.data)    
+    
+
+    
 class ListMedia(generics.ListCreateAPIView):
     queryset = Listing_Media.objects.all()
     parser_classes = (FormParser, MultiPartParser)
@@ -83,6 +117,12 @@ class FindProperty(viewsets.ModelViewSet):
 class AmenitiesView(viewsets.ModelViewSet):
     queryset = Amenities.objects.all()
     serializer_class = AmenitiesSerializer
+    parser_classes = (FormParser, MultiPartParser)
+
+
+class ListingAmenitiesView(viewsets.ModelViewSet):
+    queryset = Listing_Amenities.objects.all()
+    serializer_class = ListingAmenitiesSerializer
     parser_classes = (FormParser, MultiPartParser)
 
 class UpdateAmenitiesView(APIView):
@@ -114,7 +154,7 @@ class AddListingPostData(APIView):
     serializer_image = Listing_MediaSerializer
     compress_serializer = CompressImageSerializer
     floorplane_serializer = floorplaneSerializer
-    serializer_Amenities = AmenitiesSerializer
+    serializer_Amenities = ListingAmenitiesSerializer
     verifed_serializer = verifedImageSerializer
 
     parser_classes = (FormParser, MultiPartParser)
@@ -139,10 +179,10 @@ class AddListingPostData(APIView):
             else:
                 pass
 
-            if 'Amenities_Name' in str(data):
-                Amenities = dict((request.data).lists())['Amenities_Name']
-                data.pop("Amenities_Name")
-
+            if 'Amenities_ID' in str(data):
+                Amenities = dict((request.data).lists())['Amenities_ID']
+                data.pop("Amenities_ID")
+                            
             else:
                 pass
             if 'property_type' in str(data):
@@ -156,12 +196,12 @@ class AddListingPostData(APIView):
                 data.pop("propertyVerificationImage")
             else:
                 pass
-
+            
             
             if data:
                 serializer1 = self.serializer_list(data=data)
                 if  serializer1.is_valid(raise_exception=True):
-                    serializer1.save()
+                    serializer1.save()  
                     id=serializer1.data['id']
                 else:
                         return Response({"message":"enter the listing"}, status=status.HTTP_400_BAD_REQUEST)
@@ -182,13 +222,16 @@ class AddListingPostData(APIView):
                 pass
             if Amenities:            
                 for Amenities_name in Amenities:
-                    modified_data = multiple_Amenaties(id,Amenities_name)
-                    file_serializer =self.serializer_Amenities(data=modified_data)
-                    if file_serializer.is_valid(raise_exception=True):
-                        file_serializer.save()
-                        arr.append(file_serializer.data)
-                    else:
-                        return Response({"message":"enter the Amenities"}, status=status.HTTP_400_BAD_REQUEST)
+                    Amenities_ID = Amenities_name
+                    Amenities_ID=Amenities_ID.replace(',', '')
+                    for Amenities_id in Amenities_ID:
+                        modified_data = multiple_Amenaties(id,int(Amenities_id))
+                        file_serializer =self.serializer_Amenities(data=modified_data)
+                        if file_serializer.is_valid(raise_exception=True):
+                            file_serializer.save()
+                            arr.append(file_serializer.data)
+                        else:
+                            return Response({"message":"enter the Amenities"}, status=status.HTTP_400_BAD_REQUEST)
             else:
                 pass
                 # return Response({"message":"enter the Amenities"}, status=status.HTTP_400_BAD_REQUEST)
@@ -244,118 +287,6 @@ class filterViewSet(generics.ListAPIView):
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ['Purpose_Type','Type','property_pricing','property', 'size','Bedrooms','Batrooms','Project_status','Amenities__Amenities_Name']
  
-
-class BasicQuestionView(viewsets.ModelViewSet):
-    serializer_class = BasicQuestionSerializer
-    parser_classes = (FormParser, MultiPartParser)
-    queryset = BasicQuestionair.objects.all()
-
-
-class UpdateQuestionView(APIView):
-    # permission_classes = (IsAuthenticated,)
-    serializer_class = BasicQuestionSerializer
-    parser_classes = (FormParser, MultiPartParser)
-
-
-    def get_object(self):
-        try:
-            return BasicQuestionair.objects.get(id=self.kwargs.get('pk'))
-        except BasicQuestionair.DoesNotExist:
-            raise Http404
-
-    def get(self, request, pk):
-        snippet = self.get_object()
-        serializer = self.serializer_class(snippet)
-        return Response(serializer.data)
-
-    def put(self, request, pk):
-        object = self.get_object()
-        serializer = self.serializer_class(object, data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-class UserQuestionView(viewsets.ModelViewSet):
-    parser_classes = (FormParser, MultiPartParser)
-    serializer_class = UserQuestionSerializer
-    queryset = UserQuestionair.objects.all()
-
-
-class UpdateUserQuestionView(APIView):
-    # permission_classes = (IsAuthenticated,)
-    parser_classes = (FormParser, MultiPartParser)
-    serializer_class = UserQuestionSerializer
-
-    def get_object(self):
-        try:
-            return UserQuestionair.objects.get(id=self.kwargs.get('pk'))
-        except UserQuestionair.DoesNotExist:
-            raise Http404
-
-    def get(self, request, pk):
-        snippet = self.get_object()
-        serializer = self.serializer_class(snippet)
-        return Response(serializer.data)
-
-    def put(self, request, pk):
-        object = self.get_object()
-        serializer = self.serializer_class(object, data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-class ListingQuestionView(viewsets.ModelViewSet):
-    serializer_class = ListingQuestionSerializer
-    queryset = ListingQuestionair.objects.all()
-    parser_classes = (FormParser, MultiPartParser)
-
-
-class UpdateListingQuestionView(APIView):
-    # permission_classes = (IsAuthenticated,)
-    serializer_class = ListingQuestionSerializer
-    parser_classes = (FormParser, MultiPartParser)
-
-    def get_object(self):
-        try:
-            return ListingQuestionair.objects.get(id=self.kwargs.get('pk'))
-        except ListingQuestionair.DoesNotExist:
-            raise Http404
-
-    def get(self, request, pk):
-        snippet = self.get_object()
-        serializer = self.serializer_class(snippet)
-        return Response(serializer.data)
-
-    def put(self, request, pk):
-        object = self.get_object()
-        serializer = self.serializer_class(object, data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-class FavouriteLisitingView(viewsets.ModelViewSet):
-    serializer_class = FavouriteListingSerializer
-    queryset = FavouriteListing.objects.all()
-    parser_classes = (FormParser, MultiPartParser)
-
-
-
-class UpdateFavouriteView(generics.UpdateAPIView):
-    queryset = FavouriteListing.objects.all()
-    serializer_class = FavouriteListingSerializer
-    parser_classes = (FormParser, MultiPartParser)
-
-
-    def get(self, request, pk):
-        snippet = self.get_object()
-        serializer = self.serializer_class(snippet)
-        return Response(serializer.data)
 
 class interestedLisitingView(viewsets.ModelViewSet):
     serializer_class = interestedListingSerializer

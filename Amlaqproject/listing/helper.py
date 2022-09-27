@@ -4,10 +4,10 @@ def modify_input_for_multiple_files(id, image):
     dict['images_Url'] = image
     return dict
 
-def multiple_Amenaties(id,Amenities_name):
+def multiple_Amenaties(id,Amenities_id):
     dict = {}
     dict['listing'] = id
-    dict['Amenities_Name'] = Amenities_name
+    dict['Amenities_ID'] = Amenities_id
     return dict
 
 def multiple_property(id,property):

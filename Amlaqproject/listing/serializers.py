@@ -40,36 +40,15 @@ class CompressImageSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-
-
-# class AddListingSerializer(serializers.ModelSerializer):
-#     print("heloo")
-#     list = ListingSerializer(many=True)
-#     print(list)
-#     # Amenities = GenreSerializer(many=True)
-#     class Meta:
-#         print("hell")
-#         model = listing
-#         fields = ['user_name','Title','Descriptions','Type','Purpose_Type',
-#         'Property_Type','Bedrooms','Batrooms','Furnishing_type','Property_Tenure',
-#         'size','Build_up_Area','parking_number','Property_Developer','Build_year','Building_Floor',
-#         'Floor_number','Dewa_number','Occupancy','Project_status','Renovation_type','Layout_type',
-#         'property_pricing','Service_charge','financial_status','Cheques','property_location','street_Address',
-#         'project_name','list']
-
-#     def create(self, validated_data):
-#         print(validated_data)
-#         images = validated_data.pop('list')
-#         list = listing.objects.create(**validated_data)
-#         for image in images:
-#             Listing_Media.objects.create(**image, listing = list)
-#         return   list  
-
 class AmenitiesSerializer(serializers.ModelSerializer):
     class Meta:
         model = Amenities
         fields = '__all__'
 
+class ListingAmenitiesSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Listing_Amenities
+        fields = '__all__'
 
 class porpertyTypeSerializer(serializers.ModelSerializer):
     class Meta:
@@ -82,7 +61,7 @@ class getListingSerializer(serializers.ModelSerializer):
         source="user_name.email", read_only=True)
     list = Listing_MediaSerializer(many=True, read_only=True)
     property = porpertyTypeSerializer(many=True, read_only=True)
-    Amenities = AmenitiesSerializer(many=True, read_only=True)
+    # Amenities = AmenitiesSerializer(many=True, read_only=True)
     floorplane = floorplaneSerializer(many=True, read_only=True)
     propertyVerificationImage = verifedImageSerializer(many=True, read_only=True)
 
@@ -102,52 +81,15 @@ class filterserializers(serializers.ModelSerializer):
 class  postListingSerializer(serializers.ModelSerializer):
     list = serializers.StringRelatedField(many=True)
     property = serializers.StringRelatedField(many=True)
-    Amenities = serializers.StringRelatedField(many=True)
+    # Amenities_ID = AmenitiesSerializer(many=True)
+    # Amenities_ID = serializers.StringRelatedField(many=True)
+    
     floorplane = serializers.StringRelatedField(many=True)
     propertyVerificationImage = serializers.StringRelatedField(many=True)
     
     class Meta:
         model = listing
         fields = '__all__'
-
-# class userListingSerializers(serializers.ModelSerializer):
-#     user = UserRegistrationSerializer(many=True, read_only=True)
-
-
-    
-#     class Meta:
-#         model = User
-#         fields = '__all__'
-
-# class NotificationSerializer(serializers.ModelSerializer):
-#     class Meta:
-#         model = notifications
-#         fields = '__all__'
-
-
-class BasicQuestionSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = BasicQuestionair
-        fields = '__all__'
-
-
-class UserQuestionSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = UserQuestionair
-        fields = '__all__'
-
-
-class ListingQuestionSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = ListingQuestionair
-        fields = '__all__'
-
-
-class FavouriteListingSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = FavouriteListing
-        fields = '__all__'
-
 
 class interestedListingSerializer(serializers.ModelSerializer):
     class Meta:

@@ -18,6 +18,18 @@ def compress(image):
     im.save(im_io, 'JPEG', quality=60) 
     new_image = File(im_io, name=image.name)
     return new_image
+class Amenities(models.Model):
+    AMENITIES = (
+        ("Dishwasher","Dishwasher"),
+        ("Fireplace","Fireplace"),
+        ("Swimming pool","Swimming pool"),
+    )
+    Amenities_Name = models.CharField(max_length=50, null=True)
+    Cration_Time = models.DateTimeField(auto_now_add=True)
+    def __str__(self):
+        # data = {"id": self.id, "Amenities_Name": self.Amenities_Name }
+        return str(self.id)
+
 
 class listing(models.Model):
     zero = 0
@@ -46,9 +58,9 @@ class listing(models.Model):
 
     )
     PROPERTY_TENURE = (
-        ("Unfurnised","Unfurnised"),
-        ("semi-furnised","semi-furnised"),
-        ("furnised","furnised"),
+        ("FreeHold","FreeHold"),
+        ("Non FreeHold","Non FreeHold"),
+        ("LeaseHold","LeaseHold"),
     )
     OCCUPANCY = (
         ("Owner occupied","Owner occupied"),
@@ -58,7 +70,7 @@ class listing(models.Model):
     )
     PROJECT_STATUS = (
         ("Off plane","Off plane"),
-        ("completed","completed"),
+        ("Completed","Completed"),
     )
     RENOVATION_TYPE = (
         ("Fully upgraded","Fully upgraded"),
@@ -68,7 +80,16 @@ class listing(models.Model):
         ("Mortgaged","Mortgaged"),
         ("Cash","Cash"),
     )
+    FURNISHED_TYPE = (
+        ( 'Unfurnished', 'Unfurnished'),
+        ('Semi-furnished','Semi-furnished'),
+        ('Furnished','Furnished')
 
+    )
+    PROPERTY_USAGE = (
+        ("Single Family","Single Family"),
+        ("Bachelors","Bachelors")
+    )
     user_id = models.ForeignKey(settings.AUTH_USER_MODEL, related_name="user", on_delete=models.CASCADE,)
     Title = models.CharField(max_length=50)
     Descriptions = models.CharField(max_length=300)
@@ -76,8 +97,8 @@ class listing(models.Model):
     Purpose_Type = models.CharField(max_length=13, choices=Purpose_Choies)
     Bedrooms = models.IntegerField(max_length=1, choices=STATUS_CHOICES)
     Batrooms = models.IntegerField(max_length=1, choices=STATUS_CHOICES)
-    Furnishing_type = models.CharField(max_length=11, choices=TYPE_CHOIES)
-    Property_Tenure = models.CharField(max_length=13, choices=PROPERTY_TENURE)
+    Furnishing_type = models.CharField(max_length=14, choices=FURNISHED_TYPE ,null=True)
+    Property_Tenure = models.CharField(max_length=13, choices=PROPERTY_TENURE, null=True)
     size = models.CharField(max_length=300)
     Build_up_Area = models.CharField(max_length=300)
     parking_number = models.CharField(max_length=300)
@@ -101,8 +122,7 @@ class listing(models.Model):
     list_verified = models.BooleanField(default=False, null=True)
     latitude = models.FloatField(max_length=300, null=True)
     longitude = models.FloatField(max_length=300, null=True)
-
-
+    property_usage = models.CharField(max_length=13, choices=PROPERTY_USAGE, null=True)
 
 
 
@@ -126,7 +146,6 @@ class Property_Type(models.Model):
     property_type = models.CharField(max_length=16, choices=Property_Choices )
     def __str__(self) -> str:
         return (self.property_type)
-
 
 class userprofile(models.Model):
     userprofile = models.ForeignKey(settings.AUTH_USER_MODEL, related_name="userprofiledata", on_delete=models.CASCADE, )
@@ -167,18 +186,6 @@ class compress_image(models.Model):
         image.save(instance.images_path.path,quality=20,optimize=True)
         return instance                                                                                                                                                                                                                                                                                                                      
 
-class Amenities(models.Model):
-    AMENITIES = (
-        ("Dishwasher","Dishwasher"),
-        ("Fireplace","Fireplace"),
-        ("Swimming pool","Swimming pool"),
-    )
-    listing = models.ForeignKey(listing, related_name="Amenities", on_delete=models.CASCADE )
-    Amenities_Name = models.CharField(max_length=20, choices=AMENITIES )
-    Cration_Time = models.DateTimeField(auto_now_add=True)
-    def __str__(self):
-        # data = {"id": self.id, "Amenities_Name": self.Amenities_Name }
-        return str(self.id)
 
 
 class interested(models.Model):
@@ -191,8 +198,8 @@ class interested(models.Model):
         return str(self.user)
 
 class Listing_Amenities(models.Model):
-    listing = models.ForeignKey(listing, on_delete=models.CASCADE)
-    Amenities_ID = models.ForeignKey("Amenities", on_delete=models.CASCADE)
+    listing = models.ForeignKey(listing, related_name="Amenities", on_delete=models.CASCADE)
+    Amenities_ID = models.ForeignKey("Amenities", related_name="Amenities_ID",on_delete=models.CASCADE, null= True)
     Cration_Time = models.DateTimeField(auto_now_add=True)
 
 
@@ -200,42 +207,7 @@ class Listing_Amenities(models.Model):
 
 
 
-class BasicQuestionair(models.Model):
-    title = models.CharField(max_length=100)
-    answer_type = models.CharField(max_length=100)
-    created_at = models.DateTimeField(auto_now=True)
 
-    def __str__(self):
-        return self.title
-
-
-class UserQuestionair(models.Model):
-    question = models.ForeignKey(BasicQuestionair, on_delete=models.CASCADE)
-    answer1 = models.CharField(max_length=100)
-    answer2 = models.CharField(max_length=100)
-    created_at = models.DateTimeField(auto_now=True)
-
-    def __str__(self):
-        return self.question.title
-
-
-class ListingQuestionair(models.Model):
-    question = models.ForeignKey(BasicQuestionair, on_delete=models.CASCADE)
-    listing = models.ForeignKey(listing, on_delete=models.CASCADE)
-    correct_answer = models.CharField(max_length=100)
-    created_at = models.DateTimeField(auto_now=True)
-
-    def __str__(self):
-        return self.correct_answer
-
-
-class FavouriteListing(models.Model):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    listing = models.ForeignKey(listing, on_delete=models.CASCADE, null=True, blank=True)
-    created_at = models.DateTimeField(auto_now=True)
-
-    def __str__(self)-> str:
-        return str(self.user) 
 
 
 class Appointment(models.Model):
