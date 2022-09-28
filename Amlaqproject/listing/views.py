@@ -70,29 +70,29 @@ class GetListingView(APIView):
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-class GetListingById(APIView):
+class MylistingView(APIView):
     serializer_class = getListingSerializer
+    permission_classes = [IsAuthenticated]
     parser_classes = (FormParser, MultiPartParser)
 
-    def get_object(self):
+    def get(self, request):
         try:
-            id = Listing_Amenities.objects.get(listing=self.kwargs.get('pk'))
-            print(id)
-            for i in id:
-               print(i.Amenities_ID.Amenities_Name)
-            return listing.objects.get(id=self.kwargs.get('pk'))
+            mylisting = []
+            user = request.user.id
+            listing_data = listing.objects.filter(user_id = user)
+            if listing_data:
+                for i in listing_data:
+                    serializer = self.serializer_class(i)
+                    pub=Listing_Amenities.objects.filter(listing =  i.id).select_related("Amenities_ID").values("Amenities_ID__id","Amenities_ID__Amenities_Name" )
+                    data = serializer.data
+                    data['Amenities_ID__Amenities_Name'] = pub
+                    mylisting.append(data)
+                return Response(mylisting) 
+            else:
+                return Response({"message":"no listing"}) 
         except listing.DoesNotExist:
-            raise Http404
-
-    def get(self, request, pk):
-        user = request.user
-        print(user)
-        snippet = self.get_object()
-        serializer = self.serializer_class(snippet)
-        return Response(serializer.data)    
-    
-
-    
+            raise Http404  
+     
 class ListMedia(generics.ListCreateAPIView):
     queryset = Listing_Media.objects.all()
     parser_classes = (FormParser, MultiPartParser)

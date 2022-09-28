@@ -18,24 +18,28 @@ from django.db.models import Max
 from .models import *
 from django.http import QueryDict
 from rest_framework.views import APIView
+from rest_framework.permissions import IsAuthenticated
 from django_filters.rest_framework import DjangoFilterBackend
 
 # Create your views here.
-class FavouriteLisitingView(viewsets.ModelViewSet):
+class FavouriteView(APIView):
     serializer_class = FavouriteListingSerializer
-    queryset = FavouriteListing.objects.all()
+    permission_classes = [IsAuthenticated]
     parser_classes = (FormParser, MultiPartParser)
 
 
+    # def get(self, request):
+    #     serializer = self.serializer_class(snippet)
+    #     return Response(serializer.data)
 
-class UpdateFavouriteView(generics.UpdateAPIView):
-    queryset = FavouriteListing.objects.all()
-    serializer_class = FavouriteListingSerializer
-    parser_classes = (FormParser, MultiPartParser)
-
-
-    def get(self, request, pk):
-        snippet = self.get_object()
-        serializer = self.serializer_class(snippet)
-        return Response(serializer.data)
+    def post(self, request):
+        user = request.user.id
+        print(user)
+        request.data._mutable=True
+        data = request.data
+        data['user'] = user
+        serializer = self.serializer_class(data=data)
+        if  serializer.is_valid(raise_exception=True):
+            serializer.save()
+            return Response(serializer.data)
 

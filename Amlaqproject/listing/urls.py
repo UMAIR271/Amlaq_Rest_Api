@@ -15,6 +15,7 @@ urlpatterns = [
 
     path('property/', FindProperty.as_view({"get": "list"}),name="get_property"),
     path('filter/', filterView.as_view(),name="get_property"),
+    path('mylisting/', MylistingView.as_view(),name="get_property"),
 #     path('basic/question/', views.BasicQuestionView.as_view({"get": "list", "post": "create"}), name='basic_view'),
 #     path('update/basic/<int:pk>/', views.UpdateQuestionView.as_view(), name="update_basic"),
 #     path('user/question/', views.UserQuestionView.as_view({"get": "list", "post": "create"}), name='user_question_view'),
