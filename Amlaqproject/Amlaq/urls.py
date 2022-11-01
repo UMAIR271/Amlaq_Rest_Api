@@ -14,8 +14,10 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
+from django.conf import settings
+from django.conf.urls.static import static
 from django.urls import path, include
-
+from rest_framework_simplejwt import views as jwt_views
 from rest_framework import permissions
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
@@ -34,11 +36,16 @@ schema_view = get_schema_view(
 urlpatterns = [
     path('admin/', admin.site.urls),
      path(
-        'api/v1/',
+        '',
         include([
+            path('api/token/', jwt_views.TokenObtainPairView.as_view(), name='token_obtain_pair'),
+            path('api/token/refresh/', jwt_views.TokenRefreshView.as_view(), name='token_refresh'),
             path('loginapp/', include(('loginapp.urls', "loginapp"), namespace = "loginapp")),
-            # path('listapi/', include(('listing.urls', "listapi"), namespace = "listapi")),
+            path('list/', include(('listing.urls', "listapi"), namespace = "listapi")),
+            path('favourite/', include(('favourite.urls', "favourite"), namespace = "favourite")),
+            path('questionair/', include(('questionair.urls', "questionair"), namespace = "questionair")),
+            path('chat/', include(('chat.urls', "chat"), namespace = "chat")),
             path('swagger/schema/', schema_view.with_ui('swagger',cache_timeout=0), name='schema-schema'),
 ])
     )
-]
+]+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

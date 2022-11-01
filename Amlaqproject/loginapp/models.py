@@ -1,12 +1,13 @@
-from pickle import TRUE
+from Amlaq import settings
 from django.db import models
 from django.contrib.auth.models import BaseUserManager, AbstractBaseUser
 from rest_framework_simplejwt.tokens import RefreshToken
+from django.core.validators import RegexValidator
 
 
 # Create your models here.
 class MyUserManager(BaseUserManager):
-    def create_user(self, email, name, password=None,password2=None):
+    def create_user(self, email, username, password=None,password2=None, **extra_fields):
         """
         Creates and saves a User with the given email, date of
         birth and password.
@@ -16,14 +17,15 @@ class MyUserManager(BaseUserManager):
 
         user = self.model(
             email=self.normalize_email(email),
-            name = name, 
+            username = username, 
+            **extra_fields,
         )
 
         user.set_password(password)
         user.save(using=self._db)
         return user
 
-    def create_superuser(self, email, name, password=None):
+    def create_superuser(self, email, username, password=None, **extra_fields):
         """
         Creates and saves a superuser with the given email, date of
         birth and password.
@@ -31,7 +33,8 @@ class MyUserManager(BaseUserManager):
         user = self.create_user(
             email,
             password=password,
-            name = name, 
+            username = username, 
+            **extra_fields
         )
         user.is_admin = True
         user.save(using=self._db)
@@ -49,13 +52,24 @@ class User(AbstractBaseUser):
         max_length=255,
         unique=True,
     )
-    name = models.CharField(max_length=200)
-    is_varified = models.BooleanField(default=False)
+    email_varified = models.BooleanField(default=False)
+    username = models.CharField(max_length=200)
+    phone_regex = RegexValidator(
+        regex=r'^\+?1?\d{9,15}$',
+        message="Phone number must be entered in the format: '+999999999'. Up to 15 digits allowed."
+        )
+    phone_number = models.CharField(
+        validators=[phone_regex], 
+        max_length=17, blank=True
+        ) # Validators should be a list
+    phone_varified = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
     is_admin = models.BooleanField(default=False)
-    otp = models.CharField(max_length=6, null= True, blank=True)
+    email_otp = models.CharField(max_length=6, null= True, blank=True)
+    phone_otp = models.CharField(max_length=6, null= True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    profile_image = models.ImageField(upload_to ='uploads/', null = True)
     auth_provider = models.CharField(
         max_length=255, blank=False,
         null=False, default=AUTH_PROVIDERS.get('email')
@@ -65,7 +79,7 @@ class User(AbstractBaseUser):
     objects = MyUserManager()
 
     USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = ['name']
+    REQUIRED_FIELDS = ['username']
 
     def __str__(self):
         return self.email
